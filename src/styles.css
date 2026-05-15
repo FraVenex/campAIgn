@@ -1,0 +1,126 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html, body {
+    height: 100%;
+    margin: 0;
+    background-color: #FDFCF7;
+    font-family: 'Inter', system-ui, sans-serif;
+    color: #3F4238;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::selection {
+    background-color: rgba(107, 112, 92, 0.15);
+  }
+
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type="number"] {
+    -moz-appearance: textfield;
+  }
+
+  input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 6px;
+    border-radius: 9999px;
+    background: #E8E4D9;
+    outline: none;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #6B705C;
+    cursor: pointer;
+    border: 3px solid #FDFCF7;
+    box-shadow: 0 2px 6px rgba(63, 66, 56, 0.2);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.15);
+    box-shadow: 0 3px 10px rgba(63, 66, 56, 0.3);
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #6B705C;
+    cursor: pointer;
+    border: 3px solid #FDFCF7;
+    box-shadow: 0 2px 6px rgba(63, 66, 56, 0.2);
+  }
+}
+
+@layer components {
+  .camp-input {
+    @apply w-full px-4 py-3.5 rounded-camp bg-white border border-camp-sand
+           text-camp-earth placeholder:text-camp-olive/40
+           focus:outline-none focus:ring-2 focus:ring-camp-sage/20 focus:border-camp-sage
+           transition-all duration-200;
+  }
+
+  .camp-input-error {
+    @apply border-camp-error/40 focus:ring-camp-error/20 focus:border-camp-error;
+  }
+
+  .camp-label {
+    @apply block text-xs font-semibold uppercase tracking-wider text-camp-sage/70 mb-1.5;
+  }
+
+  .camp-helper {
+    @apply text-xs text-camp-olive/60 mt-1;
+  }
+
+  .camp-error-text {
+    @apply text-xs text-camp-error mt-1;
+  }
+
+  .camp-btn-primary {
+    @apply w-full bg-camp-sage text-white py-3.5 rounded-camp font-semibold text-base
+           shadow-camp hover:bg-camp-earth hover:shadow-camp-lg
+           active:scale-[0.98] transition-all duration-200
+           disabled:opacity-40 disabled:pointer-events-none disabled:shadow-none
+           flex items-center justify-center gap-2;
+  }
+
+  .camp-btn-secondary {
+    @apply w-full bg-camp-cream text-camp-bark py-3.5 rounded-camp font-semibold text-base
+           hover:bg-camp-sand active:scale-[0.98] transition-all duration-200
+           disabled:opacity-40 disabled:pointer-events-none
+           flex items-center justify-center gap-2;
+  }
+
+  .camp-btn-ghost {
+    @apply text-camp-sage font-medium hover:bg-camp-sage/5 px-4 py-2 rounded-camp
+           transition-all duration-200;
+  }
+
+  .camp-card {
+    @apply bg-white rounded-camp-lg border border-camp-sand/60 shadow-camp-sm
+           hover:shadow-camp transition-shadow duration-200;
+  }
+
+  .camp-alert-error {
+    @apply p-4 bg-camp-error-light border border-camp-error/15 text-camp-error
+           text-sm rounded-camp flex items-start gap-3 animate-fade-in;
+  }
+
+  .camp-alert-success {
+    @apply p-4 bg-camp-success-light border border-camp-success/15 text-camp-success
+           text-sm rounded-camp flex items-start gap-3 animate-fade-in;
+  }
+
+  .camp-glass {
+    @apply bg-white/85 backdrop-blur-xl border border-white/50 shadow-camp-xl;
+  }
+}
