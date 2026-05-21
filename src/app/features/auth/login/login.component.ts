@@ -21,21 +21,8 @@ import { CampCardComponent } from "../../../shared/components/camp-card/camp-car
 					padding="large"
 				>
 					<div class="text-center mb-8">
-						<div class="inline-flex items-center justify-center w-14 h-14 bg-camp-sage rounded-camp-lg mb-5 shadow-camp-sm">
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								class="h-7 w-7 text-white"
-								fill="none"
-								viewBox="0 0 24 24"
-								stroke="currentColor"
-								stroke-width="1.5"
-							>
-								<path
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707"
-								/>
-							</svg>
+						<div class="inline-flex items-center justify-center mb-5">
+							<img src="assets/logo.png" alt="campAIgn Logo" class="w-28 h-28 object-contain" />
 						</div>
 						<h1 class="text-3xl font-serif text-camp-earth tracking-tight mb-1">Bentornato</h1>
 						<p class="text-sm text-camp-olive">Accedi per gestire il tuo terreno</p>

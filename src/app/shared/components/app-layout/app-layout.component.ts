@@ -10,10 +10,9 @@ import { ArnaldoChatComponent } from '../arnaldo-chat/arnaldo-chat.component';
   imports: [RouterLink, RouterLinkActive, CommonModule, ArnaldoChatComponent],
   template: `
     <div class="min-h-screen bg-camp-cream/30 flex">
-      <!-- Sidebar Desktop -->
       <aside class="hidden lg:flex flex-col w-64 bg-white border-r border-camp-sand/40 p-6 fixed h-full z-20">
         <div class="flex items-center gap-2 mb-10">
-          <div class="w-8 h-8 bg-camp-sage rounded-camp"></div>
+          <img src="assets/logo.png" alt="campAIgn Logo" class="w-14 h-14 object-contain" />
           <span class="text-xl font-serif text-camp-earth tracking-tight">campAIgn</span>
         </div>
 
@@ -45,9 +44,7 @@ import { ArnaldoChatComponent } from '../arnaldo-chat/arnaldo-chat.component';
         </div>
       </aside>
 
-      <!-- Main Content Area -->
       <div class="flex-1 lg:ml-64 flex flex-col">
-        <!-- Header Mobile/Global -->
         <header class="h-16 bg-white/80 backdrop-blur-md border-b border-camp-sand/40 flex items-center justify-between px-6 sticky top-0 z-10">
           <button (click)="toggleMobileMenu()" class="lg:hidden text-camp-earth">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -56,7 +53,7 @@ import { ArnaldoChatComponent } from '../arnaldo-chat/arnaldo-chat.component';
           </button>
 
           <div class="lg:hidden flex items-center gap-2">
-            <div class="w-6 h-6 bg-camp-sage rounded-camp"></div>
+            <img src="assets/logo.png" alt="campAIgn Logo" class="w-10 h-10 object-contain" />
             <span class="text-lg font-serif text-camp-earth tracking-tight">campAIgn</span>
           </div>
 
@@ -71,19 +68,17 @@ import { ArnaldoChatComponent } from '../arnaldo-chat/arnaldo-chat.component';
           </div>
         </header>
 
-        <!-- Page Content -->
         <main class="flex-1 p-6 lg:p-10">
           <ng-content></ng-content>
         </main>
       </div>
 
-      <!-- Mobile Menu Overlay -->
       @if (mobileMenuOpen()) {
         <div class="fixed inset-0 bg-camp-earth/20 backdrop-blur-sm z-30 lg:hidden" (click)="toggleMobileMenu()">
           <div class="w-64 h-full bg-white p-6 shadow-2xl animate-slide-in" (click)="$event.stopPropagation()">
              <div class="flex items-center justify-between mb-10">
                <div class="flex items-center gap-2">
-                 <div class="w-8 h-8 bg-camp-sage rounded-camp"></div>
+                 <img src="assets/logo.png" alt="campAIgn Logo" class="w-14 h-14 object-contain" />
                  <span class="text-xl font-serif text-camp-earth">campAIgn</span>
                </div>
                <button (click)="toggleMobileMenu()" class="text-camp-olive">
