@@ -2,7 +2,6 @@ import { Component, inject, signal, OnInit, computed, ElementRef, ViewChild, CUS
 import { CommonModule } from "@angular/common";
 import { WeatherService, WeatherData } from "../../core/services/weather.service";
 import { LandService, Farm } from "../../core/services/land.service";
-import { ArnaldoCardComponent } from "../dashboard/components/arnaldo-card.component";
 import { AppLayoutComponent } from "../../shared/components/app-layout/app-layout.component";
 import { RouterLink } from "@angular/router";
 import { NgApexchartsModule } from "ng-apexcharts";
@@ -45,7 +44,7 @@ export type ChartOptions = {
 @Component({
 	selector: "app-meteo",
 	standalone: true,
-	imports: [CommonModule, ArnaldoCardComponent, RouterLink, AppLayoutComponent, NgApexchartsModule, CampCardComponent, CampDialogComponent],
+	imports: [CommonModule, RouterLink, AppLayoutComponent, NgApexchartsModule, CampCardComponent, CampDialogComponent],
 	schemas: [CUSTOM_ELEMENTS_SCHEMA],
 	template: `
 		<app-layout>
@@ -107,7 +106,7 @@ export type ChartOptions = {
 					@if (weatherData(); as data) {
 						<div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
 							<!-- Real-time Card -->
-							<div class="lg:col-span-8 flex">
+							<div class="lg:col-span-12 flex">
 								<app-camp-card
 									variant="dark"
 									subtitle="In Tempo Reale"
@@ -146,16 +145,6 @@ export type ChartOptions = {
 										}
 									</div>
 								</app-camp-card>
-							</div>
-
-							<!-- Arnaldo Card -->
-							<div class="lg:col-span-4 flex">
-								<app-arnaldo-card
-									[weather]="data"
-									[farm]="selectedFarm()"
-									mode="weather"
-									class="w-full"
-								/>
 							</div>
 
 							<!-- Forecast Section -->

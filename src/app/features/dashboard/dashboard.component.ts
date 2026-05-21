@@ -6,13 +6,12 @@ import { AppLayoutComponent } from "../../shared/components/app-layout/app-layou
 import { FarmSummaryComponent } from "./components/farm-summary.component";
 import { WeatherCardComponent } from "./components/weather-card.component";
 import { CalendarStripComponent } from "./components/calendar-strip.component";
-import { ArnaldoCardComponent } from "./components/arnaldo-card.component";
 import { CampCardComponent } from "../../shared/components/camp-card/camp-card.component";
 
 @Component({
 	selector: "app-dashboard",
 	standalone: true,
-	imports: [CommonModule, AppLayoutComponent, FarmSummaryComponent, WeatherCardComponent, CalendarStripComponent, ArnaldoCardComponent, CampCardComponent],
+	imports: [CommonModule, AppLayoutComponent, FarmSummaryComponent, WeatherCardComponent, CalendarStripComponent, CampCardComponent],
 	template: `
 		<app-layout>
 			<div class="max-w-5xl mx-auto space-y-6 animate-fade-in">
@@ -41,13 +40,6 @@ import { CampCardComponent } from "../../shared/components/camp-card/camp-card.c
 				} @else if (farms().length > 0) {
 					<!-- Main Dashboard Layout -->
 					<div class="space-y-6">
-						<!-- Riga 1: Arnaldo AI (Banner Intelligence) -->
-						<app-arnaldo-card
-							[weather]="weatherData()"
-							[farm]="selectedFarm()"
-							class="block w-full"
-						/>
-
 						<!-- Riga 2: Dati Core (Farm & Meteo) -->
 						<div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch h-full">
 							<div class="lg:col-span-5">

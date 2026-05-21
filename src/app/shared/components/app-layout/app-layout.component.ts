@@ -2,11 +2,12 @@ import { Component, inject, signal, computed } from '@angular/core';
 import { RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { CommonModule } from '@angular/common';
+import { ArnaldoChatComponent } from '../arnaldo-chat/arnaldo-chat.component';
 
 @Component({
   selector: 'app-layout',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive, CommonModule],
+  imports: [RouterLink, RouterLinkActive, CommonModule, ArnaldoChatComponent],
   template: `
     <div class="min-h-screen bg-camp-cream/30 flex">
       <!-- Sidebar Desktop -->
@@ -31,6 +32,9 @@ import { CommonModule } from '@angular/common';
           </a>
           <a routerLink="/calendar" routerLinkActive="bg-camp-sage/10 text-camp-sage" class="flex items-center gap-3 px-4 py-3 rounded-camp text-camp-olive hover:bg-camp-sand/20 transition-all font-medium">
              <span class="text-lg">📅</span> Calendario
+          </a>
+          <a routerLink="/archive" routerLinkActive="bg-camp-sage/10 text-camp-sage" class="flex items-center gap-3 px-4 py-3 rounded-camp text-camp-olive hover:bg-camp-sand/20 transition-all font-medium">
+             <span class="text-lg">📂</span> Archivio attività
           </a>
         </nav>
 
@@ -95,10 +99,12 @@ import { CommonModule } from '@angular/common';
                <a routerLink="/land" (click)="toggleMobileMenu()" class="flex items-center gap-3 px-4 py-3 rounded-camp text-camp-olive font-medium">🗺️ Il Mio Terreno</a>
                <a routerLink="/plants" (click)="toggleMobileMenu()" class="flex items-center gap-3 px-4 py-3 rounded-camp text-camp-olive font-medium">🌿 Le Mie Piante</a>
                <a routerLink="/calendar" (click)="toggleMobileMenu()" class="flex items-center gap-3 px-4 py-3 rounded-camp text-camp-olive font-medium">📅 Calendario</a>
+               <a routerLink="/archive" (click)="toggleMobileMenu()" class="flex items-center gap-3 px-4 py-3 rounded-camp text-camp-olive font-medium">📂 Archivio attività</a>
              </nav>
           </div>
         </div>
       }
+      <app-arnaldo-chat></app-arnaldo-chat>
     </div>
   `
 })

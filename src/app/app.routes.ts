@@ -30,6 +30,16 @@ export const routes: Routes = [
     canActivate: [appGuard]
   },
   {
+    path: 'calendar',
+    loadComponent: () => import('./features/calendar/calendar.component').then(m => m.CalendarComponent),
+    canActivate: [appGuard]
+  },
+  {
+    path: 'archive',
+    loadComponent: () => import('./features/archive/archive.component').then(m => m.ArchiveComponent),
+    canActivate: [appGuard]
+  },
+  {
     path: '',
     redirectTo: 'login',
     pathMatch: 'full'
