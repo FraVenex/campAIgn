@@ -20,6 +20,7 @@ export interface CalendarEvent {
   confirmed_at?: string | null;
   created_at?: string;
   updated_at?: string;
+  plant_ids?: string[];
 }
 
 @Injectable({
@@ -143,7 +144,7 @@ export class CalendarService {
     try {
       const { data, error } = await this.supabase
         .from('events')
-        .select('*')
+        .select('*, event_plants(plant_id)')
         .eq('user_id', user.id)
         .eq('status', 'confirmed');
 
@@ -174,7 +175,7 @@ export class CalendarService {
     try {
       const { data, error } = await this.supabase
         .from('events')
-        .select('*')
+        .select('*, event_plants(plant_id)')
         .eq('user_id', user.id)
         .eq('source', 'arnaldo')
         .eq('status', 'suggested');
@@ -218,13 +219,28 @@ export class CalendarService {
     }
 
     try {
+      const { plant_ids, ...dbEventData } = eventData as any;
       const { data, error } = await this.supabase
         .from('events')
-        .insert([{ ...eventData, user_id: user.id }])
+        .insert([{ ...dbEventData, user_id: user.id }])
         .select();
 
       if (error) throw error;
-      return data[0] as CalendarEvent;
+
+      const createdEvent = data[0] as CalendarEvent;
+      if (plant_ids && plant_ids.length > 0 && createdEvent.id) {
+        try {
+          const eventPlantsPayload = plant_ids.map((pid: string) => ({
+            event_id: createdEvent.id,
+            plant_id: pid
+          }));
+          await this.supabase.from('event_plants').insert(eventPlantsPayload);
+        } catch (err) {
+          console.warn('[CalendarService] Errore salvataggio relazioni event_plants:', err);
+        }
+        createdEvent.plant_ids = plant_ids;
+      }
+      return createdEvent;
     } catch (e: any) {
       if (this.isTableMissingError(e)) {
         this.activateFallback();
@@ -313,11 +329,15 @@ export class CalendarService {
   }
 
   private migrateEvents(raw: any[]): CalendarEvent[] {
-    return raw.map(e => ({
-      ...e,
-      source: e.source ?? 'user',
-      status: e.status ?? 'confirmed'
-    }));
+    return raw.map(e => {
+      const plant_ids = e.event_plants ? e.event_plants.map((ep: any) => ep.plant_id) : [];
+      return {
+        ...e,
+        plant_ids: e.plant_ids || plant_ids,
+        source: e.source ?? 'user',
+        status: e.status ?? 'confirmed'
+      };
+    });
   }
 
   private activateFallback() {

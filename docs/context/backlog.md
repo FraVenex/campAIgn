@@ -17,11 +17,11 @@
 - [x] Sviluppo del flusso di onboarding multi-step finalizzato (Step 3: Disposizione).
 - [x] Implementazione OnboardingGuard per il gating applicativo (redirect a `/dashboard`).
 - [x] Dashboard operativa con sincronizzazione dati reali.
-- [ ] Visualizzazione Terreno (Mappa interattiva / Grid View).
-- [ ] Mappatura singola pianta (Posizionamento drag & drop).
-- [ ] Integrazione Meteo (Open-Meteo API) basata su coordinate terreno.
+- [x] Visualizzazione Terreno (Mappa interattiva / Grid View con coordinate percentuali).
+- [x] Mappatura singola pianta (Posizionamento drag & drop / editing layout, Slice B completa).
+- [x] Integrazione Meteo (Open-Meteo API) basata su coordinate terreno.
 
 ## Priorità 4: Arnaldo AI
-- [ ] Setup client Gemini.
-- [ ] Implementazione assistente contestuale in Dashboard.
-- [ ] Logica di prompt per consigli agronomici basati sul meteo.
+- [x] Setup client Gemini (integrazione mock e routing contestuale).
+- [x] Implementazione assistente contestuale in Dashboard.
+- [x] Logica di prompt per consigli agronomici basati sul meteo.

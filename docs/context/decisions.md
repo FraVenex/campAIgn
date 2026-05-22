@@ -23,3 +23,7 @@
 - **Decisione**: Il layout della dashboard sarà determinato dal numero di piante inserite nell'onboarding.
 - **Motivazione**: Un utente con 10 piante ha esigenze diverse da uno con 500. La densità della griglia (`WIDE`, `BALANCED`, `DENSE`) permette di ottimizzare la leggibilità e l'interazione operativa.
 - **Impatto**: LandService calcola il layout suggerito; la UI del componente AreaCanvas (futuro) dovrà rispettare questo parametro.
+
+## 2026-05-22 - Spazio Mappa e Generazione Foto Aerea
+- **Decisione**: Riservare lo spazio del contenitore della mappa 2D e strutturarlo con coordinate percentuali relative.
+- **Motivazione**: Questo schema a percentuali (0-100%) garantisce la compatibilità con la futura funzionalità di generazione automatica del layout e posizionamento delle piante a partire da una fotografia aerea o ortofoto (permettendo di mappare i pixel dell'immagine a coordinate relative stabili).

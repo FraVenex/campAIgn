@@ -40,6 +40,16 @@ export const routes: Routes = [
     canActivate: [appGuard]
   },
   {
+    path: 'land',
+    loadComponent: () => import('./features/land/land.component').then(m => m.LandComponent),
+    canActivate: [appGuard]
+  },
+  {
+    path: 'land/plant/:id',
+    loadComponent: () => import('./features/land/plant-detail.component').then(m => m.PlantDetailComponent),
+    canActivate: [appGuard]
+  },
+  {
     path: '',
     redirectTo: 'login',
     pathMatch: 'full'

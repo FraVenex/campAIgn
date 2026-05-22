@@ -10,7 +10,7 @@ import { ArnaldoChatComponent } from '../arnaldo-chat/arnaldo-chat.component';
   imports: [RouterLink, RouterLinkActive, CommonModule, ArnaldoChatComponent],
   template: `
     <div class="min-h-screen bg-camp-cream/30 flex">
-      <aside class="hidden lg:flex flex-col w-64 bg-white border-r border-camp-sand/40 p-6 fixed h-full z-20">
+      <aside class="hidden lg:flex flex-col w-64 bg-white border-r border-camp-sand/40 p-6 fixed h-full z-40">
         <div class="flex items-center gap-2 mb-10">
           <img src="assets/logo.png" alt="campAIgn Logo" class="w-14 h-14 object-contain" />
           <span class="text-xl font-serif text-camp-earth tracking-tight">campAIgn</span>
@@ -45,7 +45,7 @@ import { ArnaldoChatComponent } from '../arnaldo-chat/arnaldo-chat.component';
       </aside>
 
       <div class="flex-1 lg:ml-64 flex flex-col">
-        <header class="h-16 bg-white/80 backdrop-blur-md border-b border-camp-sand/40 flex items-center justify-between px-6 sticky top-0 z-10">
+        <header class="h-16 bg-white/80 backdrop-blur-md border-b border-camp-sand/40 flex items-center justify-between px-6 sticky top-0 z-30">
           <button (click)="toggleMobileMenu()" class="lg:hidden text-camp-earth">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
@@ -74,7 +74,7 @@ import { ArnaldoChatComponent } from '../arnaldo-chat/arnaldo-chat.component';
       </div>
 
       @if (mobileMenuOpen()) {
-        <div class="fixed inset-0 bg-camp-earth/20 backdrop-blur-sm z-30 lg:hidden" (click)="toggleMobileMenu()">
+        <div class="fixed inset-0 bg-camp-earth/20 backdrop-blur-sm z-[45] lg:hidden" (click)="toggleMobileMenu()">
           <div class="w-64 h-full bg-white p-6 shadow-2xl animate-slide-in" (click)="$event.stopPropagation()">
              <div class="flex items-center justify-between mb-10">
                <div class="flex items-center gap-2">

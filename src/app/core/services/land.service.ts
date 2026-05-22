@@ -3,6 +3,7 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import { environment } from "../../../environments/environment";
 import { AuthService } from "./auth.service";
 import { SupabaseService } from "./supabase.service";
+import { PlantsService } from "./plants.service";
 
 export interface Farm {
 	id?: string;
@@ -24,6 +25,7 @@ export class LandService {
 	private supabase: SupabaseClient;
 	private authService = inject(AuthService);
 	private _supabaseService = inject(SupabaseService);
+	private plantsService = inject(PlantsService);
 
 	constructor() {
 		this.supabase = this._supabaseService.client;
@@ -44,7 +46,16 @@ export class LandService {
 			.select();
 
 		if (error) throw error;
-		return data[0];
+
+		const farm = data[0];
+		const generatedPlants = this.plantsService.generateGridPlants(
+			farm.id,
+			farm.main_crop,
+			farm.plants_count
+		);
+		await this.plantsService.createPlants(generatedPlants);
+
+		return farm;
 	}
 
 	async getFarms() {

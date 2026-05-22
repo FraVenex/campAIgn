@@ -20,6 +20,14 @@
 - [x] AuthService con displayName, fetch profilo post-login, PKCE flow
 - [x] LandService per persistenza terreno (migrato a tabella `farms`)
 - [x] Schema database `profiles` + `farms`
+- [x] **Mappa del Terreno**: Visualizzazione 2D interattiva delle piante con sfondo a parcelle, icone ad albero e tooltip intelligenti.
+- [x] **Dettaglio Pianta**: Route dedicata `/land/plant/:id` con informazioni dettagliate e consigli di Arnaldo per singola pianta.
+- [x] **Slice B - Gestione Layout e Piante**:
+  - Modalità Modifica Layout con drag & drop reattivo e posizionamento libero (tra 5% e 95%).
+  - Inserimento di nuove piante singole (con nome, specie e stato) o multiple (con generazione automatica e posizionamento).
+  - Selezione singola e multipla reattiva (con anelli di selezione grafici).
+  - Azioni di gruppo (bulk actions) per eliminazione bulk e pianificazione attività (trattamento, manutenzione) con persistenza sul calendario e tabelle relazionali Supabase (`event_plants`).
+  - Stato di salute bulk integrato per modificare lo stato di salute di più piante contemporaneamente.
 - [x] **Sviluppi Recenti**
   - **Meteo Detail**: Implementata la pagina `/meteo` con layout premium e glassmorphism.
     - Fetch dati agricoli (evapotraspirazione, temperatura suolo) da Open-Meteo.
@@ -32,9 +40,8 @@
   - **Navigazione**: Implementata la logica di navigazione (`routerLink`) su tutte le card principali verso `/land`, `/meteo`, `/calendar`.
 
 ## Cosa Manca
-- [ ] Mappa interattiva del terreno e visualizzazione delle piante
-- [ ] Diario delle attività agricole
+- [ ] Diario delle attività agricole (miglioramento logica pianificazione interventi)
 - [ ] Gestione profilo utente (impostazioni)
 
 ## Prossimo Step Consigliato
-Implementazione della **Mappa Interattiva** con canvas per la visualizzazione e gestione delle piante nel terreno.
+Raffinamento ed espansione del **Diario delle attività agricole** e storico interventi.
