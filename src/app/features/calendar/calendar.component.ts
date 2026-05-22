@@ -6,6 +6,8 @@ import { LandService, Farm } from '../../core/services/land.service';
 import { AppLayoutComponent } from '../../shared/components/app-layout/app-layout.component';
 import { CampCardComponent } from '../../shared/components/camp-card/camp-card.component';
 import { CampDialogComponent } from '../../shared/components/camp-dialog/camp-dialog.component';
+import { CampDatePickerComponent } from '../../shared/components/camp-date-picker/camp-date-picker.component';
+import { CampTimePickerComponent } from '../../shared/components/camp-time-picker/camp-time-picker.component';
 
 interface DayCell {
   date: Date;
@@ -22,7 +24,9 @@ interface DayCell {
     RouterLink,
     AppLayoutComponent,
     CampCardComponent,
-    CampDialogComponent
+    CampDialogComponent,
+    CampDatePickerComponent,
+    CampTimePickerComponent
   ],
   template: `
     <app-layout>
@@ -739,54 +743,12 @@ interface DayCell {
                     </button>
 
                     @if (openDropdown() === 'startDate') {
-                      <div 
-                        (click)="$event.stopPropagation()"
-                        class="absolute z-50 left-0 mt-1.5 bg-white border border-camp-sand rounded-xl shadow-camp-lg p-4 w-72 animate-slide-up"
-                      >
-                        <div class="flex items-center justify-between mb-4">
-                          <button 
-                            type="button"
-                            (click)="navigatePickerMonth(-1)"
-                            class="w-8 h-8 rounded-full hover:bg-camp-sand/30 flex items-center justify-center text-camp-olive cursor-pointer"
-                          >
-                            &lt;
-                          </button>
-                          <span class="text-xs font-serif font-bold text-camp-earth uppercase tracking-wider">
-                            {{ getPickerMonthYearLabel() }}
-                          </span>
-                          <button 
-                            type="button"
-                            (click)="navigatePickerMonth(1)"
-                            class="w-8 h-8 rounded-full hover:bg-camp-sand/30 flex items-center justify-center text-camp-olive cursor-pointer"
-                          >
-                            &gt;
-                          </button>
-                        </div>
-
-                        <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-camp-olive/60 uppercase mb-2">
-                          @for (dayLabel of ['L', 'M', 'M', 'G', 'V', 'S', 'D']; track dayLabel) {
-                            <div>{{ dayLabel }}</div>
-                          }
-                        </div>
-
-                        <div class="grid grid-cols-7 gap-1">
-                          @for (cell of pickerMonthDays(); track $index) {
-                            <button
-                              type="button"
-                              [disabled]="isPastDate(cell.date)"
-                              (click)="selectPickerDate(cell.date, 'start')"
-                              [class.text-camp-olive]="formStartDate() !== (cell.date | date: 'yyyy-MM-dd')"
-                              [class.opacity-30]="!cell.isCurrentMonth && formStartDate() !== (cell.date | date: 'yyyy-MM-dd')"
-                              [class.bg-camp-sage]="formStartDate() === (cell.date | date: 'yyyy-MM-dd')"
-                              [class.text-white]="formStartDate() === (cell.date | date: 'yyyy-MM-dd')"
-                              [class.font-bold]="formStartDate() === (cell.date | date: 'yyyy-MM-dd')"
-                              [class.opacity-10]="isPastDate(cell.date)"
-                              class="w-8 h-8 rounded-full hover:bg-camp-sand/30 flex items-center justify-center text-xs transition-colors disabled:pointer-events-none cursor-pointer"
-                            >
-                              {{ cell.label }}
-                            </button>
-                          }
-                        </div>
+                      <div class="absolute z-50 left-0 mt-1.5">
+                        <app-camp-date-picker
+                          [selectedDate]="formStartDate()"
+                          [disablePast]="true"
+                          (dateSelected)="selectPickerDate($event, 'start')"
+                        />
                       </div>
                     }
                   </div>
@@ -807,18 +769,10 @@ interface DayCell {
                     </button>
 
                     @if (openDropdown() === 'startTime') {
-                      <div class="absolute z-50 left-0 right-0 mt-1.5 bg-white border border-camp-sand rounded-xl shadow-camp-lg max-h-48 overflow-y-auto py-1.5 custom-scrollbar animate-slide-up">
-                        @for (time of timeOptions; track time) {
-                          <button
-                            type="button"
-                            (click)="selectTime(time, 'start')"
-                            class="w-full text-left px-4 py-2.5 text-xs text-camp-earth hover:bg-camp-cream/40 transition-colors flex items-center justify-between cursor-pointer"
-                          >
-                            <span>{{ time }}</span>
-                            @if (formStartTime() === time) { <span class="text-camp-sage">✓</span> }
-                          </button>
-                        }
-                      </div>
+                      <app-camp-time-picker
+                        [selectedTime]="formStartTime()"
+                        (timeSelected)="selectTime($event, 'start')"
+                      />
                     }
                   </div>
                 </div>
@@ -840,54 +794,12 @@ interface DayCell {
                     </button>
 
                     @if (openDropdown() === 'endDate') {
-                      <div 
-                        (click)="$event.stopPropagation()"
-                        class="absolute z-50 left-0 mt-1.5 bg-white border border-camp-sand rounded-xl shadow-camp-lg p-4 w-72 animate-slide-up"
-                      >
-                        <div class="flex items-center justify-between mb-4">
-                          <button 
-                            type="button"
-                            (click)="navigatePickerMonth(-1)"
-                            class="w-8 h-8 rounded-full hover:bg-camp-sand/30 flex items-center justify-center text-camp-olive cursor-pointer"
-                          >
-                            &lt;
-                          </button>
-                          <span class="text-xs font-serif font-bold text-camp-earth uppercase tracking-wider">
-                            {{ getPickerMonthYearLabel() }}
-                          </span>
-                          <button 
-                            type="button"
-                            (click)="navigatePickerMonth(1)"
-                            class="w-8 h-8 rounded-full hover:bg-camp-sand/30 flex items-center justify-center text-camp-olive cursor-pointer"
-                          >
-                            &gt;
-                          </button>
-                        </div>
-
-                        <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-camp-olive/60 uppercase mb-2">
-                          @for (dayLabel of ['L', 'M', 'M', 'G', 'V', 'S', 'D']; track dayLabel) {
-                            <div>{{ dayLabel }}</div>
-                          }
-                        </div>
-
-                        <div class="grid grid-cols-7 gap-1">
-                          @for (cell of pickerMonthDays(); track $index) {
-                            <button
-                              type="button"
-                              [disabled]="isPastDate(cell.date)"
-                              (click)="selectPickerDate(cell.date, 'end')"
-                              [class.text-camp-olive]="formEndDate() !== (cell.date | date: 'yyyy-MM-dd')"
-                              [class.opacity-30]="!cell.isCurrentMonth && formEndDate() !== (cell.date | date: 'yyyy-MM-dd')"
-                              [class.bg-camp-sage]="formEndDate() === (cell.date | date: 'yyyy-MM-dd')"
-                              [class.text-white]="formEndDate() === (cell.date | date: 'yyyy-MM-dd')"
-                              [class.font-bold]="formEndDate() === (cell.date | date: 'yyyy-MM-dd')"
-                              [class.opacity-10]="isPastDate(cell.date)"
-                              class="w-8 h-8 rounded-full hover:bg-camp-sand/30 flex items-center justify-center text-xs transition-colors disabled:pointer-events-none cursor-pointer"
-                            >
-                              {{ cell.label }}
-                            </button>
-                          }
-                        </div>
+                      <div class="absolute z-50 left-0 mt-1.5">
+                        <app-camp-date-picker
+                          [selectedDate]="formEndDate()"
+                          [disablePast]="true"
+                          (dateSelected)="selectPickerDate($event, 'end')"
+                        />
                       </div>
                     }
                   </div>
@@ -908,18 +820,10 @@ interface DayCell {
                     </button>
 
                     @if (openDropdown() === 'endTime') {
-                      <div class="absolute z-50 left-0 right-0 mt-1.5 bg-white border border-camp-sand rounded-xl shadow-camp-lg max-h-48 overflow-y-auto py-1.5 custom-scrollbar animate-slide-up">
-                        @for (time of timeOptions; track time) {
-                          <button
-                            type="button"
-                            (click)="selectTime(time, 'end')"
-                            class="w-full text-left px-4 py-2.5 text-xs text-camp-earth hover:bg-camp-cream/40 transition-colors flex items-center justify-between cursor-pointer"
-                          >
-                            <span>{{ time }}</span>
-                            @if (formEndTime() === time) { <span class="text-camp-sage">✓</span> }
-                          </button>
-                        }
-                      </div>
+                      <app-camp-time-picker
+                        [selectedTime]="formEndTime()"
+                        (timeSelected)="selectTime($event, 'end')"
+                      />
                     }
                   </div>
                 </div>
@@ -959,28 +863,7 @@ interface DayCell {
       </app-camp-dialog>
     }
   `,
-  styles: [`
-    .custom-scrollbar::-webkit-scrollbar {
-      width: 4px;
-    }
-    .custom-scrollbar::-webkit-scrollbar-track {
-      background: transparent;
-    }
-    .custom-scrollbar::-webkit-scrollbar-thumb {
-      background: #E6DFD3;
-      border-radius: 2px;
-    }
-    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-      background: #8FA89B;
-    }
-    .animate-fade-in {
-      animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-  `]
+  styles: []
 })
 export class CalendarComponent implements OnInit {
   private calendarService = inject(CalendarService);
@@ -1020,7 +903,6 @@ export class CalendarComponent implements OnInit {
   hoveredCellDateStr = signal<string | null>(null);
 
   openDropdown = signal<'farm' | 'type' | 'farmActive' | 'titlePreset' | 'startDate' | 'endDate' | 'startTime' | 'endTime' | null>(null);
-  pickerDate = signal<Date>(new Date());
 
   isEditingPastEvent = signal(false);
   formPastStatus = signal<'completata' | 'completata_note' | 'non_completata'>('non_completata');
@@ -1044,15 +926,6 @@ export class CalendarComponent implements OnInit {
       return new Date(e.end) >= today;
     });
   });
-
-  timeOptions = [
-    '00:00', '00:30', '01:00', '01:30', '02:00', '02:30', '03:00', '03:30',
-    '04:00', '04:30', '05:00', '05:30', '06:00', '06:30', '07:00', '07:30',
-    '08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
-    '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30',
-    '16:00', '16:30', '17:00', '17:30', '18:00', '18:30', '19:00', '19:30',
-    '20:00', '20:30', '21:00', '21:30', '22:00', '22:30', '23:00', '23:30'
-  ];
 
   titlePresets = computed(() => {
     const type = this.formType();
@@ -1118,47 +991,6 @@ export class CalendarComponent implements OnInit {
     }
 
     return true;
-  });
-
-  pickerMonthDays = computed(() => {
-    const d = this.pickerDate();
-    const year = d.getFullYear();
-    const month = d.getMonth();
-    const firstDay = new Date(year, month, 1);
-    let startDay = firstDay.getDay();
-    startDay = startDay === 0 ? 6 : startDay - 1;
-
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const daysInPrevMonth = new Date(year, month, 0).getDate();
-
-    const cells: { date: Date; isCurrentMonth: boolean; label: number }[] = [];
-
-    for (let i = startDay - 1; i >= 0; i--) {
-      cells.push({
-        date: new Date(year, month - 1, daysInPrevMonth - i),
-        isCurrentMonth: false,
-        label: daysInPrevMonth - i
-      });
-    }
-
-    for (let i = 1; i <= daysInMonth; i++) {
-      cells.push({
-        date: new Date(year, month, i),
-        isCurrentMonth: true,
-        label: i
-      });
-    }
-
-    const totalCells = cells.length;
-    const remaining = totalCells > 35 ? 42 - totalCells : 35 - totalCells;
-    for (let i = 1; i <= remaining; i++) {
-      cells.push({
-        date: new Date(year, month + 1, i),
-        isCurrentMonth: false,
-        label: i
-      });
-    }
-    return cells;
   });
 
   modalSubtitle = computed(() => {
@@ -1802,17 +1634,6 @@ export class CalendarComponent implements OnInit {
       this.openDropdown.set(null);
     } else {
       this.openDropdown.set(dropdown);
-      if (dropdown === 'startDate' && this.formStartDate()) {
-        const d = new Date(this.formStartDate());
-        if (!isNaN(d.getTime())) {
-          this.pickerDate.set(d);
-        }
-      } else if (dropdown === 'endDate' && this.formEndDate()) {
-        const d = new Date(this.formEndDate());
-        if (!isNaN(d.getTime())) {
-          this.pickerDate.set(d);
-        }
-      }
     }
   }
 
@@ -1843,12 +1664,7 @@ export class CalendarComponent implements OnInit {
     return d.toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' });
   }
 
-  selectPickerDate(date: Date, type: 'start' | 'end') {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const dateStr = `${year}-${month}-${day}`;
-
+  selectPickerDate(dateStr: string, type: 'start' | 'end') {
     if (type === 'start') {
       this.formStartDate.set(dateStr);
       if (this.formEndDate() && dateStr > this.formEndDate()) {
@@ -1863,11 +1679,6 @@ export class CalendarComponent implements OnInit {
     this.openDropdown.set(null);
   }
 
-  navigatePickerMonth(direction: number) {
-    const d = new Date(this.pickerDate());
-    d.setMonth(d.getMonth() + direction);
-    this.pickerDate.set(d);
-  }
 
   selectTime(time: string, type: 'start' | 'end') {
     if (type === 'start') {
@@ -1890,9 +1701,6 @@ export class CalendarComponent implements OnInit {
     this.openDropdown.set(null);
   }
 
-  getPickerMonthYearLabel(): string {
-    return this.pickerDate().toLocaleDateString('it-IT', { month: 'long', year: 'numeric' });
-  }
 
   getSelectedTypeLabel(): string {
     const type = this.formType();

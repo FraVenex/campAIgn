@@ -1,0 +1,64 @@
+{
+  "user": {
+    "id": "bf79613b-929a-4f98-b720-43749a9d73c4",
+    "aud": "authenticated",
+    "role": "authenticated",
+    "email": "francesco.veneziano.95@hotmail.com",
+    "email_confirmed_at": "2026-05-14T13:42:40.276103Z",
+    "phone": "",
+    "confirmation_sent_at": "2026-05-14T13:42:09.393412Z",
+    "confirmed_at": "2026-05-14T13:42:40.276103Z",
+    "last_sign_in_at": "2026-05-22T12:15:57.453502915Z",
+    "app_metadata": {
+      "provider": "email",
+      "providers": [
+        "email"
+      ]
+    },
+    "user_metadata": {
+      "email": "francesco.veneziano.95@hotmail.com",
+      "email_verified": true,
+      "full_name": "Francesco",
+      "phone_verified": false,
+      "sub": "bf79613b-929a-4f98-b720-43749a9d73c4"
+    },
+    "identities": [
+      {
+        "identity_id": "919fe880-90de-4d66-a5bf-7072f018cb5d",
+        "id": "bf79613b-929a-4f98-b720-43749a9d73c4",
+        "user_id": "bf79613b-929a-4f98-b720-43749a9d73c4",
+        "identity_data": {
+          "email": "francesco.veneziano.95@hotmail.com",
+          "email_verified": true,
+          "full_name": "Francesco",
+          "phone_verified": false,
+          "sub": "bf79613b-929a-4f98-b720-43749a9d73c4"
+        },
+        "provider": "email",
+        "last_sign_in_at": "2026-05-14T13:42:09.363638Z",
+        "created_at": "2026-05-14T13:42:09.363705Z",
+        "updated_at": "2026-05-14T13:42:09.363705Z",
+        "email": "francesco.veneziano.95@hotmail.com"
+      }
+    ],
+    "created_at": "2026-05-14T13:42:09.293336Z",
+    "updated_at": "2026-05-22T12:15:57.510634Z",
+    "is_anonymous": false
+  },
+  "farms": [
+    {
+      "id": "f4bdc935-39a2-41e3-8972-48d080b96edd",
+      "user_id": "bf79613b-929a-4f98-b720-43749a9d73c4",
+      "created_at": "2026-05-14T14:49:23.10188+00:00",
+      "updated_at": "2026-05-14T14:49:23.10188+00:00",
+      "name": "Costabile",
+      "main_crop": "ULIVI",
+      "latitude": 41.5293425,
+      "longitude": 12.6280288,
+      "plants_count": 88,
+      "layout_type": "medium_grid"
+    }
+  ],
+  "plants": [],
+  "localStorageSession": "{\"access_token\":\"eyJhbGciOiJFUzI1NiIsImtpZCI6ImZhZTI4YjQ5LWY5NDctNGExNS04ZWI1LWY0YWYwYmZmZGQ4NyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL3JsaXhwZWNob2p3YXh3YXpieGNxLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJiZjc5NjEzYi05MjlhLTRmOTgtYjcyMC00Mzc0OWE5ZDczYzQiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc5NDU1NzU3LCJpYXQiOjE3Nzk0NTIxNTcsImVtYWlsIjoiZnJhbmNlc2NvLnZlbmV6aWFuby45NUBob3RtYWlsLmNvbSIsInBob25lIjoiIiwiYXBwX21ldGFkYXRhIjp7InByb3ZpZGVyIjoiZW1haWwiLCJwcm92aWRlcnMiOlsiZW1haWwiXX0sInVzZXJfbWV0YWRhdGEiOnsiZW1haWwiOiJmcmFuY2VzY28udmVuZXppYW5vLjk1QGhvdG1haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImZ1bGxfbmFtZSI6IkZyYW5jZXNjbyIsInBob25lX3ZlcmlmaWVkIjpmYWxzZSwic3ViIjoiYmY3OTYxM2ItOTI5YS00Zjk4LWI3MjAtNDM3NDlhOWQ3M2M0In0sInJvbGUiOiJhdXRoZW50aWNhdGVkIiwiYWFsIjoiYWFsMSIsImFtciI6W3sibWV0aG9kIjoicGFzc3dvcmQiLCJ0aW1lc3RhbXAiOjE3Nzk0NTIxNTd9XSwic2Vzc2lvbl9pZCI6IjViMDIxY2FjLWE1OTgtNDE3MC04ZDQ4LTI0OTJhNzY3ZjMyYSIsImlzX2Fub255bW91cyI6ZmFsc2V9.85ni6iZu8YFFfNGDtNiZvZc6LT0LR2wA3-FIx2bIOXjHNYqI5MHPcyCZ3XvDkbB0Gd3Gj9ARDqRd2gZzZVNutQ\",\"token_type\":\"bearer\",\"expires_in\":3600,\"expires_at\":1779455757,\"refresh_token\":\"chu7mhlx5anz\",\"user\":{\"id\":\"bf79613b-929a-4f98-b720-43749a9d73c4\",\"aud\":\"authenticated\",\"role\":\"authenticated\",\"email\":\"francesco.veneziano.95@hotmail.com\",\"email_confirmed_at\":\"2026-05-14T13:42:40.276103Z\",\"phone\":\"\",\"confirmation_sent_at\":\"2026-05-14T13:42:09.393412Z\",\"confirmed_at\":\"2026-05-14T13:42:40.276103Z\",\"last_sign_in_at\":\"2026-05-22T12:15:57.453502915Z\",\"app_metadata\":{\"provider\":\"email\",\"providers\":[\"email\"]},\"user_metadata\":{\"email\":\"francesco.veneziano.95@hotmail.com\",\"email_verified\":true,\"full_name\":\"Francesco\",\"phone_verified\":false,\"sub\":\"bf79613b-929a-4f98-b720-43749a9d73c4\"},\"identities\":[{\"identity_id\":\"919fe880-90de-4d66-a5bf-7072f018cb5d\",\"id\":\"bf79613b-929a-4f98-b720-43749a9d73c4\",\"user_id\":\"bf79613b-929a-4f98-b720-43749a9d73c4\",\"identity_data\":{\"email\":\"francesco.veneziano.95@hotmail.com\",\"email_verified\":true,\"full_name\":\"Francesco\",\"phone_verified\":false,\"sub\":\"bf79613b-929a-4f98-b720-43749a9d73c4\"},\"provider\":\"email\",\"last_sign_in_at\":\"2026-05-14T13:42:09.363638Z\",\"created_at\":\"2026-05-14T13:42:09.363705Z\",\"updated_at\":\"2026-05-14T13:42:09.363705Z\",\"email\":\"francesco.veneziano.95@hotmail.com\"}],\"created_at\":\"2026-05-14T13:42:09.293336Z\",\"updated_at\":\"2026-05-22T12:15:57.510634Z\",\"is_anonymous\":false},\"weak_password\":null}"
+}
