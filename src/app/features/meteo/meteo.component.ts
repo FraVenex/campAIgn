@@ -288,9 +288,9 @@ export type ChartOptions = {
 								[icon]="selectedMetric() === 'temperature' ? '🌡️' : selectedMetric() === 'humidity' ? '💧' : '🌬️'"
 								(close)="closeDialog()"
 							>
-								<div class="h-full w-full min-h-[400px]">
+								<div class="w-full min-h-[380px]">
 									<apx-chart
-										class="h-full w-full"
+										class="w-full"
 										[series]="chartOptions().series"
 										[chart]="chartOptions().chart"
 										[xaxis]="chartOptions().xaxis"
@@ -367,8 +367,10 @@ export class MeteoComponent implements OnInit {
 		const timestamps = w.hourly.time || [];
 		const color = this.getMetricColor(metric);
 
-		const todayStart = new Date(timestamps[0]).getTime();
-		const todayEnd = new Date(timestamps[24] || timestamps[timestamps.length - 1]).getTime();
+		const startIdx = timestamps.length > 24 ? 24 : 0;
+		const endIdx = timestamps.length > 48 ? 48 : timestamps.length - 1;
+		const todayStart = new Date(timestamps[startIdx]).getTime();
+		const todayEnd = new Date(timestamps[endIdx]).getTime();
 
 		return {
 			series: [
@@ -379,7 +381,7 @@ export class MeteoComponent implements OnInit {
 			],
 			chart: {
 				type: "area",
-				height: "100%",
+				height: 380,
 				width: "100%",
 				fontFamily: "Outfit, sans-serif",
 				toolbar: {
@@ -489,7 +491,7 @@ export class MeteoComponent implements OnInit {
 	private getDefaultChartOptions() {
 		return {
 			series: [],
-			chart: { type: "area", height: "100%", width: "100%" },
+			chart: { type: "area", height: 380, width: "100%" },
 			xaxis: { type: "datetime" },
 			stroke: { curve: "smooth" },
 			dataLabels: { enabled: false },
