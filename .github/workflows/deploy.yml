@@ -26,7 +26,13 @@ jobs:
         run: npm ci
 
       - name: Build Angular application
-        run: npm run build -- --base-href /campAIgn/
+        run: |
+          npm run build -- --base-href /campAIgn/ || {
+            npm run build -- --base-href /campAIgn/ > build_error.txt 2>&1
+            ERROR_LOG=$(cat build_error.txt | tr '\n' '%' | sed 's/%/%0A/g')
+            echo "::error::$ERROR_LOG"
+            exit 1
+          }
 
       - name: Copy index to 404
         run: cp dist/camp-aign-frontend/browser/index.html dist/camp-aign-frontend/browser/404.html
