@@ -300,6 +300,37 @@ export class CalendarService {
     }
   }
 
+  async getLastEventForPlant(plantId: string): Promise<CalendarEvent | null> {
+    const user = this.authService.currentUser();
+    if (!user) return null;
+
+    if (this.useLocalStorageFallback) {
+      const events = this.getFallbackEvents();
+      const matching = events
+        .filter(e => e.plant_ids?.includes(plantId))
+        .sort((a, b) => new Date(b.start).getTime() - new Date(a.start).getTime());
+      return matching[0] ?? null;
+    }
+
+    try {
+      const { data, error } = await this.supabase
+        .from('event_plants')
+        .select('event_id, events(*)')
+        .eq('plant_id', plantId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error || !data) return null;
+
+      const raw = (data as any).events;
+      if (!raw) return null;
+      return { ...raw, plant_ids: [plantId] } as CalendarEvent;
+    } catch {
+      return null;
+    }
+  }
+
   async deleteEvent(id: string): Promise<void> {
     const user = this.authService.currentUser();
     if (!user) throw new Error('Utente non autenticato');

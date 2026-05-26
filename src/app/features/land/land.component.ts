@@ -10,11 +10,12 @@ import { CampCardComponent } from "../../shared/components/camp-card/camp-card.c
 import { CampDialogComponent } from "../../shared/components/camp-dialog/camp-dialog.component";
 import { CampDatePickerComponent } from "../../shared/components/camp-date-picker/camp-date-picker.component";
 import { CampTimePickerComponent } from "../../shared/components/camp-time-picker/camp-time-picker.component";
+import { PlantPopupComponent, PlantPopupData } from "../../shared/components/plant-popup/plant-popup.component";
 
 @Component({
 	selector: "app-land",
 	standalone: true,
-	imports: [CommonModule, FormsModule, RouterLink, AppLayoutComponent, CampCardComponent, CampDialogComponent, CampDatePickerComponent, CampTimePickerComponent],
+	imports: [CommonModule, FormsModule, RouterLink, AppLayoutComponent, CampCardComponent, CampDialogComponent, CampDatePickerComponent, CampTimePickerComponent, PlantPopupComponent],
 	template: `
 		<app-layout>
 			<div class="max-w-7xl mx-auto space-y-6 animate-fade-in relative pb-10">
@@ -227,7 +228,7 @@ import { CampTimePickerComponent } from "../../shared/components/camp-time-picke
 								</div>
 							}
 
-							<div class="map-container relative w-full aspect-[4/3] bg-gradient-to-br from-[#dfd7bf] to-[#c7beaa] border border-camp-sand/40 rounded-camp overflow-hidden shadow-inner select-none">
+							<div class="map-container relative w-full aspect-[4/3] bg-gradient-to-br from-[#dfd7bf] to-[#c7beaa] border border-camp-sand/40 rounded-camp overflow-hidden shadow-inner select-none" (click)="closePlantPopup()">
 								<svg
 									class="absolute inset-0 w-full h-full text-camp-earth/10"
 									xmlns="http://www.w3.org/2000/svg"
@@ -293,20 +294,22 @@ import { CampTimePickerComponent } from "../../shared/components/camp-time-picke
 
 								@for (p of filteredPlants(); track p.id) {
 									<div
-										class="absolute group hover:z-30"
-										[class.z-20]="selectedPlantIds().has(p.id!)"
-										[class.z-10]="!selectedPlantIds().has(p.id!)"
+										class="absolute"
+										[class.z-40]="activePopupPlantId() === p.id"
+										[class.z-20]="selectedPlantIds().has(p.id!) && activePopupPlantId() !== p.id"
+										[class.z-10]="!selectedPlantIds().has(p.id!) && activePopupPlantId() !== p.id"
 										[style.left.%]="p.position_x"
 										[style.top.%]="p.position_y"
 									>
 										@if (!isEditMode()) {
-											<a
-												[routerLink]="['/land/plant', p.id]"
+											<button
+												type="button"
+												(click)="$event.stopPropagation(); openPlantPopup(p)"
 												[class]="getPlantMarkerClass(p)"
 												class="w-9 h-9 transform -translate-x-1/2 -translate-y-1/2 rounded-full transition-all duration-300 flex items-center justify-center cursor-pointer shadow-md select-none hover:scale-125 focus:outline-none animate-scale-in"
 											>
 												<span class="text-base select-none">🌳</span>
-											</a>
+											</button>
 										} @else {
 											<div
 												(mousedown)="editSubMode() === 'move' ? onDragStart($event, p) : null"
@@ -323,25 +326,12 @@ import { CampTimePickerComponent } from "../../shared/components/camp-time-picke
 											</div>
 										}
 
-										<div [class]="getTooltipClass(p)">
-											<div class="font-bold font-serif">{{ p.name }}</div>
-											<div class="text-[10px] opacity-70">{{ p.species }}</div>
-											<div
-												class="text-[9px] uppercase tracking-wider font-bold mt-1"
-												[ngClass]="{
-													'text-green-300': p.status === 'Ottimo',
-													'text-yellow-300': p.status === 'Attenzione',
-													'text-red-300': p.status === 'Stressato',
-													'text-stone-300': p.status !== 'Ottimo' && p.status !== 'Attenzione' && p.status !== 'Stressato'
-												}"
-											>
-												Stato: {{ p.status }}
-											</div>
-											@if (p.last_treatment_type) {
-												<div class="text-[9px] opacity-60 mt-0.5">Trattamento: {{ p.last_treatment_type }}</div>
-											}
-											<div [class]="getTooltipArrowClass(p)"></div>
-										</div>
+										@if (!isEditMode() && activePopupPlantId() === p.id && activePopupData()) {
+											<app-plant-popup
+												[data]="activePopupData()!"
+												(close)="closePlantPopup()"
+											/>
+										}
 									</div>
 								}
 							</div>
@@ -987,6 +977,9 @@ export class LandComponent implements OnInit {
 	isDeleteConfirmOpen = signal(false);
 	toast = signal<{ message: string; type: "success" | "error" | "info" } | null>(null);
 
+	activePopupPlantId = signal<string | null>(null);
+	activePopupData = signal<PlantPopupData | null>(null);
+
 
 	private activeDragPlant: Plant | null = null;
 	private dragStartX = 0;
@@ -1156,41 +1149,36 @@ export class LandComponent implements OnInit {
 		return colorClass;
 	}
 
-	getTooltipClass(p: Plant): string {
-		let verticalClass = "bottom-full mb-3";
-		if (p.position_y < 25) {
-			verticalClass = "top-full mt-3";
-		}
-		let horizontalClass = "left-1/2 -translate-x-1/2";
-		if (p.position_x < 20) {
-			horizontalClass = "left-0 translate-x-0 ml-[-12px]";
-		} else if (p.position_x > 80) {
-			horizontalClass = "right-0 translate-x-0 mr-[-12px]";
-		}
-		return `absolute ${verticalClass} ${horizontalClass} bg-camp-earth text-white text-xs rounded-lg py-2 px-3 shadow-camp-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-30 border border-white/5`;
-	}
-
-	getTooltipArrowClass(p: Plant): string {
-		let verticalClass = "top-full -mt-1 border-r border-b";
-		if (p.position_y < 25) {
-			verticalClass = "bottom-full -mb-1 border-t border-l";
-		}
-		let horizontalClass = "left-1/2 -translate-x-1/2";
-		if (p.position_x < 20) {
-			horizontalClass = "left-4 translate-x-0";
-		} else if (p.position_x > 80) {
-			horizontalClass = "right-4 translate-x-0";
-		}
-		return `absolute ${verticalClass} ${horizontalClass} w-2 h-2 bg-camp-earth rotate-45 border-white/5`;
-	}
 
 	toggleEditMode() {
 		this.isEditMode.set(!this.isEditMode());
 		if (this.isEditMode()) {
 			this.editSubMode.set('select');
+			this.closePlantPopup();
 		} else {
 			this.clearSelection();
 		}
+	}
+
+	async openPlantPopup(plant: Plant) {
+		if (!plant.id) return;
+		if (this.activePopupPlantId() === plant.id) {
+			this.closePlantPopup();
+			return;
+		}
+		this.activePopupPlantId.set(plant.id);
+		this.activePopupData.set({ plant, lastEvent: null });
+		try {
+			const lastEvent = await this.calendarService.getLastEventForPlant(plant.id);
+			this.activePopupData.set({ plant, lastEvent });
+		} catch {
+			// mantieni popup con dati base disponibili
+		}
+	}
+
+	closePlantPopup() {
+		this.activePopupPlantId.set(null);
+		this.activePopupData.set(null);
 	}
 
 	toggleSelection(plant: Plant, event?: Event) {
