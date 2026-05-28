@@ -331,6 +331,36 @@ export class CalendarService {
     }
   }
 
+  async getEventsForPlant(plantId: string): Promise<CalendarEvent[]> {
+    const user = this.authService.currentUser();
+    if (!user) return [];
+
+    if (this.useLocalStorageFallback) {
+      return this.getFallbackEvents()
+        .filter(e => e.plant_ids?.includes(plantId))
+        .sort((a, b) => new Date(b.start).getTime() - new Date(a.start).getTime());
+    }
+
+    try {
+      const { data, error } = await this.supabase
+        .from('event_plants')
+        .select('event_id, events(*)')
+        .eq('plant_id', plantId);
+
+      if (error || !data) return [];
+
+      return (data as any[])
+        .map(row => {
+          const ev = row.events;
+          if (!ev) return null;
+          return { ...ev, plant_ids: [plantId] } as CalendarEvent;
+        })
+        .filter(Boolean) as CalendarEvent[];
+    } catch {
+      return [];
+    }
+  }
+
   async deleteEvent(id: string): Promise<void> {
     const user = this.authService.currentUser();
     if (!user) throw new Error('Utente non autenticato');

@@ -226,6 +226,7 @@ export class ArnaldoChatComponent {
 		if (url.includes("/meteo")) return "meteo";
 		if (url.includes("/calendar")) return "calendar";
 		if (url.includes("/archive")) return "archive";
+		if (url.includes("/land/plant/")) return "plant-detail";
 		if (url.includes("/land")) return "land";
 		if (url.includes("/plants")) return "plants";
 		return "general";
@@ -255,6 +256,10 @@ export class ArnaldoChatComponent {
 		plants: {
 			greeting: "Qui gestiamo le tue piante. Ogni ulivo ha le sue necessità a seconda dell'età e della disposizione. Di cosa vorresti parlare?",
 			suggestions: ["Ogni quanto vanno irrigate le piante?", "Quali malattie dell'olivo devo prevenire?", "Consigli per la concimazione"]
+		},
+		"plant-detail": {
+			greeting: "Stai visualizzando la scheda di questa pianta. Posso aiutarti a interpretare il suo stato di salute, suggerire trattamenti specifici o spiegarti come programmare la manutenzione.",
+			suggestions: ["Come interpreto lo stato della pianta?", "Quando programmare la prossima potatura?", "Quali foto sono utili per la diagnosi?"]
 		},
 		general: {
 			greeting: "Ciao! Sono Arnaldo, il tuo assistente virtuale per la cura dell'uliveto. Come posso aiutarti oggi?",
@@ -293,7 +298,10 @@ export class ArnaldoChatComponent {
 		"Come funziona campAIgn?":
 			"campAIgn ti aiuta a gestire piccoli appezzamenti e piante (specialmente ulivi) in modo semplice e intelligente, analizzando dati meteo e offrendoti consigli su misura.",
 		"Quali colture sono supportate?": "L'app è ottimizzata per l'uliveto, ma supporta anche agrumi, vigneti e altre colture miste o orti.",
-		"Come inserisco un nuovo terreno?": "Se hai completato l'onboarding, puoi visualizzare il tuo terreno attivo. Presto potrai aggiungere altri terreni direttamente dall'interfaccia principale!"
+		"Come inserisco un nuovo terreno?": "Se hai completato l'onboarding, puoi visualizzare il tuo terreno attivo. Presto potrai aggiungere altri terreni direttamente dall'interfaccia principale!",
+		"Come interpreto lo stato della pianta?": "Lo stato 'Ottimo' indica piena salute vegetativa. 'Attenzione' segnala sintomi da controllare (foglie ingiallite, macchie). 'Stressato' richiede intervento immediato, solitamente idrico o anti-parassitario.",
+		"Quando programmare la prossima potatura?": "Per l'olivo, la potatura di produzione va eseguita tra febbraio e marzo, dopo le gelate e prima della ripresa vegetativa. Usa il pulsante 'Programma Manutenzione' in questa pagina.",
+		"Quali foto sono utili per la diagnosi?": "Scatta foto ravvicinate alle foglie (fronte e retro), al tronco, ai rami e alla chioma. Le foto stagionali di confronto sono molto utili per identificare l'evoluzione di malattie come l'occhio di pavone."
 	};
 
 	currentSuggestions = computed(() => {

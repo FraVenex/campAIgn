@@ -42,6 +42,8 @@
 ## Cosa Manca
 - [ ] Diario delle attività agricole (miglioramento logica pianificazione interventi)
 - [ ] Gestione profilo utente (impostazioni)
+- [ ] Supabase Storage bucket `plant-photos` da creare in produzione
+- [ ] Tabella `plant_photos` da creare nel DB Supabase
 
 ## Prossimo Step Consigliato
-Raffinamento ed espansione del **Diario delle attività agricole** e storico interventi.
+Creazione del bucket Supabase Storage `plant-photos` e della tabella `plant_photos` per abilitare il caricamento foto in produzione.
