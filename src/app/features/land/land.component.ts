@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, OnInit, HostListener } from "@angular/core";
+import { Component, inject, signal, computed, OnInit, HostListener, ChangeDetectorRef } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { RouterLink } from "@angular/router";
@@ -228,13 +228,51 @@ import { PlantPopupComponent, PlantPopupData } from "../../shared/components/pla
 								</div>
 							}
 
-							<div class="map-container relative w-full aspect-[4/3] bg-gradient-to-br from-[#dfd7bf] to-[#c7beaa] border border-camp-sand/40 rounded-camp overflow-hidden shadow-inner select-none" (click)="closePlantPopup()">
-								<svg
-									class="absolute inset-0 w-full h-full text-camp-earth/10"
-									xmlns="http://www.w3.org/2000/svg"
+							<div class="relative w-full aspect-[4/3] border border-camp-sand/40 rounded-camp shadow-inner bg-camp-sand/10 overflow-hidden">
+								<div class="absolute bottom-4 right-4 z-[55] flex flex-col shadow-camp-sm rounded-xl overflow-hidden border border-camp-sand/40">
+									<button 
+										type="button" 
+										(click)="zoomIn()" 
+										[disabled]="zoom() >= 4" 
+										[class.opacity-40]="zoom() >= 4" 
+										class="w-10 h-10 bg-white/90 backdrop-blur flex items-center justify-center text-camp-earth hover:bg-white transition-colors border-b border-camp-sand/40 font-bold text-xl cursor-pointer disabled:cursor-not-allowed" 
+										title="Zoom In"
+									>+</button>
+									<button 
+										type="button" 
+										(click)="zoomOut()" 
+										[disabled]="zoom() <= 1" 
+										[class.opacity-40]="zoom() <= 1" 
+										class="w-10 h-10 bg-white/90 backdrop-blur flex items-center justify-center text-camp-earth hover:bg-white transition-colors font-bold text-2xl cursor-pointer leading-none disabled:cursor-not-allowed" 
+										title="Zoom Out"
+									>−</button>
+								</div>
+
+								<div 
+									#scrollContainer
+									class="w-full h-full overflow-auto relative map-scroll-container cursor-grab active:cursor-grabbing touch-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+									(wheel)="onWheel($event, scrollContainer)"
+									(mousedown)="onMapDragStart($event, scrollContainer)"
+									(mousemove)="onMapDrag($event, scrollContainer)"
+									(mouseup)="onMapDragEnd()"
+									(mouseleave)="onMapDragEnd()"
+									(touchstart)="onTouchStart($event, scrollContainer)"
+									(touchmove)="onTouchMove($event, scrollContainer)"
+									(touchend)="onTouchEnd()"
+									(touchcancel)="onTouchEnd()"
 								>
-									<defs>
-										<pattern
+									<div 
+										class="map-container relative bg-gradient-to-br from-[#dfd7bf] to-[#c7beaa] select-none origin-top-left min-h-full" 
+										[style.width.%]="zoom() * 100"
+										[style.height.%]="zoom() * 100"
+										(click)="closePlantPopup()"
+									>
+										<svg
+											class="absolute inset-0 w-full h-full text-camp-earth/10 pointer-events-none"
+											xmlns="http://www.w3.org/2000/svg"
+										>
+											<defs>
+												<pattern
 											id="parcels"
 											width="100"
 											height="100"
@@ -334,6 +372,8 @@ import { PlantPopupComponent, PlantPopupData } from "../../shared/components/pla
 										}
 									</div>
 								}
+									</div>
+								</div>
 							</div>
 						</div>
 					}
@@ -945,6 +985,7 @@ export class LandComponent implements OnInit {
 	private landService = inject(LandService);
 	private plantsService = inject(PlantsService);
 	private calendarService = inject(CalendarService);
+	private cdr = inject(ChangeDetectorRef);
 
 	farms = signal<Farm[]>([]);
 	selectedFarm = signal<Farm | null>(null);
@@ -976,6 +1017,8 @@ export class LandComponent implements OnInit {
 	bulkStatus = signal("Nessuna Modifica");
 	isDeleteConfirmOpen = signal(false);
 	toast = signal<{ message: string; type: "success" | "error" | "info" } | null>(null);
+
+	zoom = signal<number>(1);
 
 	activePopupPlantId = signal<string | null>(null);
 	activePopupData = signal<PlantPopupData | null>(null);
@@ -1179,6 +1222,121 @@ export class LandComponent implements OnInit {
 	closePlantPopup() {
 		this.activePopupPlantId.set(null);
 		this.activePopupData.set(null);
+	}
+
+	zoomIn() {
+		this.zoom.update(z => Math.min(4, z + 0.5));
+	}
+
+	zoomOut() {
+		this.zoom.update(z => Math.max(1, z - 0.5));
+	}
+
+	resetZoom() {
+		this.zoom.set(1);
+	}
+
+	private mapIsDragging = false;
+	private mapDragStartX = 0;
+	private mapDragStartY = 0;
+	private mapScrollStartX = 0;
+	private mapScrollStartY = 0;
+	private initialPinchDistance = 0;
+	private initialZoomOnPinch = 1;
+
+	onMapDragStart(event: MouseEvent, container: HTMLElement) {
+		if (event.button !== 0 || (this.isEditMode() && this.editSubMode() === 'move')) return;
+		this.mapIsDragging = true;
+		this.mapDragStartX = event.clientX;
+		this.mapDragStartY = event.clientY;
+		this.mapScrollStartX = container.scrollLeft;
+		this.mapScrollStartY = container.scrollTop;
+	}
+
+	onMapDrag(event: MouseEvent, container: HTMLElement) {
+		if (!this.mapIsDragging) return;
+		event.preventDefault();
+		const dx = event.clientX - this.mapDragStartX;
+		const dy = event.clientY - this.mapDragStartY;
+		container.scrollLeft = this.mapScrollStartX - dx;
+		container.scrollTop = this.mapScrollStartY - dy;
+	}
+
+	onMapDragEnd() {
+		this.mapIsDragging = false;
+	}
+
+	onWheel(event: WheelEvent, container: HTMLElement) {
+		event.preventDefault();
+		const zoomDelta = event.deltaY > 0 ? -0.2 : 0.2;
+		const oldZoom = this.zoom();
+		const newZoom = Math.max(1, Math.min(4, oldZoom + zoomDelta));
+		if (oldZoom !== newZoom) {
+			this.applyZoom(newZoom, event.clientX, event.clientY, container);
+		}
+	}
+
+	onTouchStart(event: TouchEvent, container: HTMLElement) {
+		if (event.touches.length === 1 && (!this.isEditMode() || this.editSubMode() !== 'move')) {
+			this.mapIsDragging = true;
+			this.mapDragStartX = event.touches[0].clientX;
+			this.mapDragStartY = event.touches[0].clientY;
+			this.mapScrollStartX = container.scrollLeft;
+			this.mapScrollStartY = container.scrollTop;
+		} else if (event.touches.length === 2) {
+			this.initialPinchDistance = this.getTouchDistance(event.touches[0], event.touches[1]);
+			this.initialZoomOnPinch = this.zoom();
+		}
+	}
+
+	onTouchMove(event: TouchEvent, container: HTMLElement) {
+		if (event.touches.length === 1 && this.mapIsDragging) {
+			event.preventDefault();
+			const dx = event.touches[0].clientX - this.mapDragStartX;
+			const dy = event.touches[0].clientY - this.mapDragStartY;
+			container.scrollLeft = this.mapScrollStartX - dx;
+			container.scrollTop = this.mapScrollStartY - dy;
+		} else if (event.touches.length === 2) {
+			event.preventDefault();
+			const currentDistance = this.getTouchDistance(event.touches[0], event.touches[1]);
+			const scale = currentDistance / this.initialPinchDistance;
+			
+			const newZoom = Math.max(1, Math.min(4, this.initialZoomOnPinch * scale));
+			
+			const centerX = (event.touches[0].clientX + event.touches[1].clientX) / 2;
+			const centerY = (event.touches[0].clientY + event.touches[1].clientY) / 2;
+
+			this.applyZoom(newZoom, centerX, centerY, container);
+		}
+	}
+
+	onTouchEnd() {
+		this.mapIsDragging = false;
+		this.initialPinchDistance = 0;
+	}
+
+	private getTouchDistance(t1: Touch, t2: Touch): number {
+		const dx = t1.clientX - t2.clientX;
+		const dy = t1.clientY - t2.clientY;
+		return Math.sqrt(dx * dx + dy * dy);
+	}
+
+	private applyZoom(newZoom: number, clientX: number, clientY: number, container: HTMLElement) {
+		const oldZoom = this.zoom();
+		if (oldZoom === newZoom) return;
+
+		const rect = container.getBoundingClientRect();
+		const mouseX = clientX - rect.left;
+		const mouseY = clientY - rect.top;
+
+		const mapX = (container.scrollLeft + mouseX) / oldZoom;
+		const mapY = (container.scrollTop + mouseY) / oldZoom;
+
+		this.zoom.set(parseFloat(newZoom.toFixed(2)));
+		this.cdr.detectChanges();
+
+		container.scrollLeft = (mapX * newZoom) - mouseX;
+		container.scrollTop = (mapY * newZoom) - mouseY;
 	}
 
 	toggleSelection(plant: Plant, event?: Event) {
