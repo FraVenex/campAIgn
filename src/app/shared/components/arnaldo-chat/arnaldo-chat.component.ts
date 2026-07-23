@@ -1,9 +1,13 @@
-import { Component, inject, signal, computed, effect, ElementRef, ViewChild } from "@angular/core";
+import { Component, inject, signal, computed, effect, ElementRef, ViewChild, OnInit } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { Router, NavigationEnd } from "@angular/router";
 import { toSignal } from "@angular/core/rxjs-interop";
 import { filter, map } from "rxjs";
+import { WeatherService, WeatherData } from "../../../core/services/weather.service";
+import { CalendarService, CalendarEvent } from "../../../core/services/calendar.service";
+import { LandService } from "../../../core/services/land.service";
+import { WeatherImpactService } from "../../../core/services/weather-impact.service";
 
 export interface ChatMessage {
 	id: string;
@@ -201,16 +205,23 @@ interface ContextConfig {
 		`
 	]
 })
-export class ArnaldoChatComponent {
+export class ArnaldoChatComponent implements OnInit {
 	@ViewChild("scrollContainer") private scrollContainer!: ElementRef;
 
 	private router = inject(Router);
+	private weatherService = inject(WeatherService);
+	private calendarService = inject(CalendarService);
+	private landService = inject(LandService);
+	private weatherImpactService = inject(WeatherImpactService);
 
 	isOpen = signal(false);
 	inputText = signal("");
 	messages = signal<ChatMessage[]>([]);
 	isTyping = signal(false);
 	hasNotification = signal(true);
+
+	weatherData = signal<WeatherData | null>(null);
+	eventsData = signal<CalendarEvent[]>([]);
 
 	private currentUrl = toSignal(
 		this.router.events.pipe(
@@ -234,16 +245,16 @@ export class ArnaldoChatComponent {
 
 	private contexts: Record<string, ContextConfig> = {
 		dashboard: {
-			greeting: "Ciao! Sono Arnaldo. Vuoi una panoramica rapida sul tuo terreno o hai bisogno di consigli sulle attività di oggi?",
-			suggestions: ["Quali attività ho oggi?", "Com'è la situazione del mio terreno?", "Mostrami un consiglio veloce"]
+			greeting: "Ciao! Sono Arnaldo. Vuoi una panoramica sulle tue attività o ti interessa sapere se il meteo di oggi è idoneo ai lavori?",
+			suggestions: ["Ci sono conflitti meteo per le mie attività?", "Quali attività ho in programma?", "Com'è la situazione del mio terreno?"]
 		},
 		meteo: {
-			greeting: "Vedo che stai analizzando il clima. Le condizioni meteo influenzano molto il lavoro nei campi. Vuoi sapere se è il momento giusto per fare trattamenti?",
-			suggestions: ["Si possono fare trattamenti oggi?", "Cos'è l'Evapotraspirazione (ET0)?", "La temperatura del suolo è buona?"]
+			greeting: "Vedo che stai analizzando il clima. Posso incrociare le previsioni con le tue attività in calendario per suggerirti le finestre migliori.",
+			suggestions: ["Come impatta questo meteo sulle mie attività?", "Si possono fare trattamenti oggi?", "Cos'è l'Evapotraspirazione (ET0)?"]
 		},
 		calendar: {
-			greeting: "Siamo nella sezione pianificazione. Vuoi una mano a organizzare i prossimi interventi sul tuo uliveto o vuoi confermare i miei suggerimenti?",
-			suggestions: ["Quali attività mi suggerisci di pianificare?", "Come gestisco un'attività passata?", "Posso trascinare le attività?"]
+			greeting: "Siamo nella sezione pianificazione. Vuoi verificare l'impatto del meteo sulle attività in programma o spostarle in una giornata migliore?",
+			suggestions: ["Quali attività sono a rischio meteo?", "Quali attività mi suggerisci di pianificare?", "Posso trascinare le attività?"]
 		},
 		archive: {
 			greeting: "Benvenuto nell'archivio storico delle attività. Analizzare il passato è fondamentale per migliorare la cura del tuo terreno. Cosa vorresti cercare?",
@@ -267,43 +278,6 @@ export class ArnaldoChatComponent {
 		}
 	};
 
-	private mockAnswers: Record<string, string> = {
-		"Quali attività ho oggi?": "Oggi hai in programma le attività che vedi nel calendario settimanale. Se piove, ti consiglio di svolgere lavori al coperto come la manutenzione degli attrezzi.",
-		"Com'è la situazione del mio terreno?": "Il tuo terreno attivo è in ottima salute. Il monitoraggio è attivo e le coordinate GPS ci permettono di ricevere dati meteo precisi in tempo reale.",
-		"Mostrami un consiglio veloce": "Certo! Ricorda di controllare l'umidità del suolo. Negli uliveti, è importante evitare ristagni d'acqua per prevenire malattie radicali.",
-		"Si possono fare trattamenti oggi?": "Dipende dalle condizioni correnti. Se c'è vento forte (sopra i 20 km/h) o pioggia, ti sconsiglio vivamente trattamenti fogliari o irrigazioni programmabili.",
-		"Cos'è l'Evapotraspirazione (ET0)?":
-			"L'evapotraspirazione (ET0) indica la quantità di acqua che il terreno e le piante perdono per evaporazione e traspirazione. Ti aiuta a calcolare esattamente quanta acqua restituire con l'irrigazione.",
-		"La temperatura del suolo è buona?": "Sì, la temperatura radicale a 6cm è ideale per l'attività vegetativa degli ulivi. Monitorarla ti aiuta a prevenire shock termici alle radici.",
-		"Quali attività mi suggerisci di pianificare?":
-			"In questa stagione ti suggerisco di programmare interventi di potatura verde o di concimazione organica. Trovi le mie proposte in fondo alla pagina, pronte da accettare!",
-		"Come gestisco un'attività passata?":
-			"Clicca su un'attività passata nel calendario per aggiornare lo stato di completamento (completata, con note o non svolta) e aggiungere annotazioni utili per il futuro.",
-		"Posso trascinare le attività?": "Sì! Nel calendario in modalità Mese o Settimana puoi trascinare le attività da un giorno all'altro per riprogrammarle facilmente.",
-		"Perché è utile lo storico?":
-			"Esaminare lo storico delle attività ti consente di individuare pattern ricorrenti, capire quali trattamenti hanno funzionato meglio e ricordare con precisione quando hai effettuato l'ultima concimazione o potatura.",
-		"Come posso filtrare le attività?":
-			"Puoi scorrere l'elenco delle attività completate e non completate per avere un quadro chiaro degli interventi effettuati nel tempo. Usa le note per tenere traccia dei dettagli.",
-		"Consigli per la compilazione dei log": "Sii il più preciso possibile nelle note: scrivi le dosi dei trattamenti, i tempi impiegati e le tue osservazioni sullo stato delle foglie o delle piante.",
-		"Come influisce la disposizione delle piante?":
-			"Una disposizione regolare (griglia) ottimizza l'uso della luce e facilita il passaggio dei mezzi agricoli. La disposizione libera asseconda la naturale pendenza del terreno.",
-		"Qual è il layout consigliato?": "Dipende dal numero di piante: fino a 30 consigliamo un sesto ampio ('loose'), fino a 120 una griglia regolare ('medium_grid'), oltre 120 una griglia più densa.",
-		"Come posso modificare le coordinate?": "Puoi reimpostare la posizione del terreno durante l'onboarding oppure tramite la pagina delle impostazioni del terreno (prossimamente disponibile).",
-		"Ogni quanto vanno irrigate le piante?":
-			"Gli ulivi adulti sono molto resistenti alla siccità, ma per una produzione ottimale l'irrigazione a goccia va attivata nei periodi più caldi e asciutti dell'estate.",
-		"Quali malattie dell'olivo devo prevenire?":
-			"Le principali minacce sono l'occhio di pavone (cicloconio), la rogna dell'olivo e la mosca olearia. Trattamenti preventivi con rameici dopo la potatura o piogge prolungate sono fondamentali.",
-		"Consigli per la concimazione":
-			"La concimazione azotata va effettuata a fine inverno prima della ripresa vegetativa, mentre quella fosfo-potassica va fatta in autunno per favorire lo sviluppo delle radici e la resistenza al freddo.",
-		"Come funziona campAIgn?":
-			"campAIgn ti aiuta a gestire piccoli appezzamenti e piante (specialmente ulivi) in modo semplice e intelligente, analizzando dati meteo e offrendoti consigli su misura.",
-		"Quali colture sono supportate?": "L'app è ottimizzata per l'uliveto, ma supporta anche agrumi, vigneti e altre colture miste o orti.",
-		"Come inserisco un nuovo terreno?": "Se hai completato l'onboarding, puoi visualizzare il tuo terreno attivo. Presto potrai aggiungere altri terreni direttamente dall'interfaccia principale!",
-		"Come interpreto lo stato della pianta?": "Lo stato 'Ottimo' indica piena salute vegetativa. 'Attenzione' segnala sintomi da controllare (foglie ingiallite, macchie). 'Stressato' richiede intervento immediato, solitamente idrico o anti-parassitario.",
-		"Quando programmare la prossima potatura?": "Per l'olivo, la potatura di produzione va eseguita tra febbraio e marzo, dopo le gelate e prima della ripresa vegetativa. Usa il pulsante 'Programma Manutenzione' in questa pagina.",
-		"Quali foto sono utili per la diagnosi?": "Scatta foto ravvicinate alle foglie (fronte e retro), al tronco, ai rami e alla chioma. Le foto stagionali di confronto sono molto utili per identificare l'evoluzione di malattie come l'occhio di pavone."
-	};
-
 	currentSuggestions = computed(() => {
 		const ctx = this.routeContext();
 		return this.contexts[ctx]?.suggestions || [];
@@ -317,6 +291,20 @@ export class ArnaldoChatComponent {
 			},
 			{ allowSignalWrites: true }
 		);
+	}
+
+	async ngOnInit() {
+		try {
+			const farms = await this.landService.getFarms();
+			if (farms.length > 0 && farms[0].latitude && farms[0].longitude) {
+				this.weatherService.getWeather(farms[0].latitude, farms[0].longitude).subscribe({
+					next: data => this.weatherData.set(data),
+					error: () => {}
+				});
+			}
+			const events = await this.calendarService.getConfirmedEvents();
+			this.eventsData.set(events);
+		} catch {}
 	}
 
 	toggleChat() {
@@ -386,38 +374,96 @@ export class ArnaldoChatComponent {
 			this.messages.update(msgs => [...msgs, arnaldoMsg]);
 			this.isTyping.set(false);
 			this.scrollToBottom();
-		}, 1000);
+		}, 900);
 	}
 
 	private getAnswerForText(text: string): string {
-		if (this.mockAnswers[text]) {
-			return this.mockAnswers[text];
+		const lower = text.toLowerCase();
+		const weather = this.weatherData();
+		const events = this.eventsData();
+
+		if (
+			lower.includes("conflitt") || 
+			lower.includes("rischio meteo") || 
+			lower.includes("impatto") || 
+			lower.includes("problemi meteo")
+		) {
+			if (!weather) {
+				return "Al momento i dati meteo non sono disponibili per valutare le tue attività in calendario.";
+			}
+			if (!events || events.length === 0) {
+				return "Non ci sono attività in calendario per cui valutare conflitti meteo. Puoi programmarne di nuove dalla sezione Calendario!";
+			}
+
+			const conflicts: string[] = [];
+			events.forEach(ev => {
+				const evalRes = this.weatherImpactService.evaluateEventImpact(ev, weather);
+				if (evalRes.status === "attention") {
+					let line = `• "${ev.title}" (${new Date(ev.start).toLocaleDateString("it-IT", { day: "numeric", month: "short" })}): ${evalRes.reason}`;
+					if (evalRes.betterWindow) {
+						line += ` -> Consiglio: sposta al ${evalRes.betterWindow.dateLabel}.`;
+					}
+					conflicts.push(line);
+				}
+			});
+
+			if (conflicts.length > 0) {
+				return `Ecco le attività che richiedono attenzione causa meteo:\n\n${conflicts.join("\n\n")}\n\nPuoi rivederle e riprogrammarle dal Calendario.`;
+			} else {
+				return "Ho controllato le tue attività in programma rispetto alle previsioni a 7 giorni: non risulta alcuna criticità meteo rilevante! Puoi procedere regolarmente.";
+			}
 		}
 
-		const lower = text.toLowerCase();
-		if (lower.includes("meteo") || lower.includes("tempo") || lower.includes("pioggia") || lower.includes("vento") || lower.includes("clima")) {
-			return "Le condizioni meteorologiche sono cruciali. Ti consiglio di monitorare la velocità del vento (trattamenti sconsigliati sopra i 20 km/h) e di evitare trattamenti fogliari in caso di pioggia imminente.";
+		if (lower.includes("trattament") || lower.includes("fogliari")) {
+			if (weather?.current) {
+				const wind = weather.current.windSpeed ?? 0;
+				const precip = weather.current.precipitation ?? 0;
+				if (wind > 20) {
+					return `Oggi il vento soffia a ${wind} km/h. Ti sconsiglio vivamente di effettuare trattamenti fogliari per evitare la dispersione del prodotto.`;
+				}
+				if (precip > 2) {
+					return `Oggi sono previsti ${precip} mm di pioggia. Meglio evitare trattamenti fogliari per scongiurare il dilavamento.`;
+				}
+				return `Attualmente il meteo registra vento a ${wind} km/h e pioggia a ${precip} mm. Le condizioni generali sono idonee per i trattamenti fogliari.`;
+			}
+			return "Se c'è vento forte (sopra i 20 km/h) o pioggia imminente, ti sconsiglio vivamente trattamenti fogliari o nebulizzazioni.";
 		}
-		if (lower.includes("irrig") || lower.includes("acqua") || lower.includes("secco") || lower.includes("bagnare")) {
-			return "Per l'irrigazione degli ulivi, la regola d'oro è evitare ristagni idrici. Utilizza l'indicatore ET0 (Evapotraspirazione) nella pagina Meteo per calcolare il fabbisogno d'acqua stimato.";
+
+		if (lower.includes("irrig") || lower.includes("acqua") || lower.includes("bagnare")) {
+			if (weather?.daily?.precipSums) {
+				const todayPrecip = weather.daily.precipSums[0] ?? 0;
+				if (todayPrecip >= 2) {
+					return `Oggi sono previsti ${todayPrecip} mm di pioggia sul tuo terreno. L'irrigazione non è necessaria ed è preferibile sospenderla.`;
+				}
+			}
+			return "Per l'irrigazione degli ulivi, la regola d'oro è evitare ristagni idrici. Utilizza l'indicatore ET0 nella pagina Meteo per calcolare il fabbisogno d'acqua stimato.";
 		}
+
+		if (lower.includes("attività") || lower.includes("programma")) {
+			if (events && events.length > 0) {
+				const list = events.slice(0, 3).map(e => `• ${e.title} (${new Date(e.start).toLocaleDateString("it-IT", { day: "numeric", month: "short" })})`).join("\n");
+				return `Le tue prossime attività in programma sono:\n${list}\n\nPuoi consultare l'elenco completo nella sezione Calendario.`;
+			}
+			return "Non hai ancora attività confermate in calendario. Arnaldo può suggerirti degli interventi di manutenzione stagionale!";
+		}
+
 		if (lower.includes("potat") || lower.includes("ram") || lower.includes("tagli")) {
-			return "La potatura dell'ulivo si effettua solitamente a fine inverno (febbraio-marzo), dopo le gelate ma prima della fioritura. Serve a dare luce all'interno della chioma e rimuovere i rami improduttivi (succhioni e selvatici).";
+			return "La potatura dell'ulivo si effettua solitamente a fine inverno (febbraio-marzo), dopo le gelate ma prima della fioritura. Serve a dare luce all'interno della chioma e rimuovere i rami improduttivi.";
 		}
+
 		if (lower.includes("malat") || lower.includes("mosca") || lower.includes("fungo") || lower.includes("foglie")) {
 			return "Attenzione all'occhio di pavone (macchie circolari sulle foglie) e alla mosca dell'olivo in estate. I trattamenti preventivi a base di rame sono molto efficaci e ammessi in agricoltura biologica.";
 		}
-		if (lower.includes("concim") || lower.includes("fertilizz") || lower.includes("nutrimento")) {
+
+		if (lower.includes("concim") || lower.includes("fertilizz")) {
 			return "Usa concimi organici (come lo stallatico pellettato) a fine inverno per apportare azoto. In autunno, prediligi potassio e fosforo per rafforzare la pianta contro il gelo invernale.";
 		}
+
 		if (lower.includes("ciao") || lower.includes("buongiorno") || lower.includes("salve") || lower.includes("arnaldo")) {
 			return "Ciao! Sono sempre pronto ad aiutarti con i miei consigli agronomici. Dimmi pure, cosa succede nel tuo uliveto?";
 		}
-		if (lower.includes("grazie") || lower.includes("ottimo") || lower.includes("perfetto")) {
-			return "Prego! È sempre un piacere aiutarti a far crescere sani i tuoi ulivi. Se hai altre domande, chiedi pure!";
-		}
 
-		return "Interessante! Come assistente agronomico, ti consiglio di monitorare sempre le condizioni meteo e l'umidità del suolo prima di agire. C'è qualche dettaglio in particolare (potatura, irrigazione, concimazione) di cui vorresti parlare?";
+		return "Interessante! Come assistente agronomico, ti consiglio di monitorare sempre le condizioni meteo e l'umidità del suolo prima di agire. C'è qualche dettaglio in particolare di cui vorresti parlare?";
 	}
 
 	private scrollToBottom() {
@@ -425,9 +471,7 @@ export class ArnaldoChatComponent {
 			if (this.scrollContainer) {
 				try {
 					this.scrollContainer.nativeElement.scrollTop = this.scrollContainer.nativeElement.scrollHeight;
-				} catch {
-					// Fallback silente
-				}
+				} catch {}
 			}
 		}, 50);
 	}

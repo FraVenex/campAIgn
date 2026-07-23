@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { CalendarService, CalendarEvent } from '../../core/services/calendar.service';
 import { LandService, Farm } from '../../core/services/land.service';
+import { WeatherService, WeatherData } from '../../core/services/weather.service';
+import { WeatherImpactService, WeatherImpactEvaluation } from '../../core/services/weather-impact.service';
 import { AppLayoutComponent } from '../../shared/components/app-layout/app-layout.component';
 import { CampCardComponent } from '../../shared/components/camp-card/camp-card.component';
 import { CampDialogComponent } from '../../shared/components/camp-dialog/camp-dialog.component';
@@ -165,10 +167,8 @@ interface DayCell {
             <div class="w-12 h-12 rounded-full border-4 border-camp-sand border-t-camp-sage animate-spin"></div>
           </div>
         } @else {
-          <!-- views -->
           @if (currentView() === 'month') {
             <div class="bg-white rounded-2xl border border-camp-sand/40 shadow-sm overflow-hidden flex flex-col">
-              <!-- Weekday Headers -->
               <div class="grid grid-cols-7 border-b border-camp-sand/30 bg-camp-cream/20 divide-x divide-camp-sand/20">
                 @for (day of weekdayLabels; track day) {
                   <div class="py-3 text-center text-xs font-bold uppercase tracking-wider text-camp-olive opacity-80">
@@ -177,7 +177,6 @@ interface DayCell {
                 }
               </div>
 
-              <!-- Days Grid -->
               <div class="grid grid-cols-7 grid-rows-6 divide-x divide-y divide-camp-sand/20 -mt-[1px] -ml-[1px]">
                 @for (cell of monthDays(); track $index) {
                   <div 
@@ -228,7 +227,11 @@ interface DayCell {
                             }
                             <span class="truncate pr-1">{{ event.title }}</span>
                           </div>
-                          <span class="shrink-0 opacity-70">{{ getEventIcon(event.type) }}</span>
+                          @if (getImpact(event).status === 'attention') {
+                            <span class="shrink-0 text-[10px]" [title]="getImpact(event).reason">{{ getImpact(event).icon }}</span>
+                          } @else {
+                            <span class="shrink-0 opacity-70">{{ getEventIcon(event.type) }}</span>
+                          }
                         </div>
                       }
                     </div>
@@ -283,6 +286,12 @@ interface DayCell {
                             </div>
                             <span>{{ getEventIcon(event.type) }}</span>
                           </div>
+                          @if (getImpact(event).status === 'attention') {
+                            <div [title]="getImpact(event).reason" class="px-2 py-0.5 rounded-md bg-amber-100/90 text-amber-900 border border-amber-300 text-[9px] font-bold uppercase tracking-wider flex items-center gap-1">
+                              <span>{{ getImpact(event).icon }}</span>
+                              <span class="truncate">{{ getImpact(event).badgeLabel }}</span>
+                            </div>
+                          }
                           @if (event.description) {
                             <p class="text-[10px] opacity-75 line-clamp-2 leading-relaxed">
                               {{ event.description }}
@@ -310,7 +319,6 @@ interface DayCell {
 
           @if (currentView() === 'day') {
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <!-- Left side: Timeline list -->
               <div class="lg:col-span-2 flex">
                 <app-camp-card 
                   title="Orario della Giornata"
@@ -341,6 +349,12 @@ interface DayCell {
                                     </span>
                                   }
                                   <h4 class="text-base font-serif font-bold text-camp-earth">{{ event.title }}</h4>
+                                  @if (getImpact(event).status === 'attention') {
+                                    <span [title]="getImpact(event).reason" class="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
+                                      <span>{{ getImpact(event).icon }}</span>
+                                      <span>{{ getImpact(event).badgeLabel }}</span>
+                                    </span>
+                                  }
                                 </div>
                                 <span class="text-xl">{{ getEventIcon(event.type) }}</span>
                               </div>
@@ -375,7 +389,6 @@ interface DayCell {
                 </app-camp-card>
               </div>
 
-              <!-- Right side: Day overview & quick notes -->
               <div class="flex flex-col gap-6">
                 <app-camp-card 
                   variant="primary"
@@ -426,10 +439,7 @@ interface DayCell {
           }
         }
 
-
-        <!-- Sezione Suggerimenti di Arnaldo -->
         <div class="space-y-5 animate-fade-in">
-
           @if (isLoadingSuggestions()) {
             <div class="flex items-center gap-3 p-5 bg-white rounded-2xl border border-camp-sand/40">
               <div class="w-5 h-5 rounded-full border-2 border-camp-sand border-t-camp-sage animate-spin shrink-0"></div>
@@ -537,6 +547,48 @@ interface DayCell {
         (close)="closeFormModal()"
       >
         <div class="p-6 md:p-8 space-y-6">
+          @if (!isEditingPastEvent()) {
+            <div 
+              [class]="'p-4 rounded-xl border flex flex-col gap-2 transition-all ' + 
+                (currentFormImpact().status === 'attention' ? 'bg-amber-50/80 border-amber-300 text-amber-900' : 
+                 currentFormImpact().status === 'favorable' ? 'bg-camp-success-light/40 border-camp-success/20 text-camp-earth' : 
+                 'bg-camp-cream/20 border-camp-sand/40 text-camp-earth')"
+            >
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class="text-lg leading-none">{{ currentFormImpact().icon }}</span>
+                  <h4 class="text-xs font-serif font-bold tracking-wide">{{ currentFormImpact().title }}</h4>
+                </div>
+                <span 
+                  [class]="'px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded-full border ' + 
+                    (currentFormImpact().status === 'attention' ? 'bg-amber-200 text-amber-900 border-amber-300' : 
+                     currentFormImpact().status === 'favorable' ? 'bg-camp-success/20 text-camp-success border-camp-success/30' : 
+                     'bg-camp-sand/30 text-camp-olive border-camp-sand/40')"
+                >
+                  {{ currentFormImpact().badgeLabel }}
+                </span>
+              </div>
+              <p class="text-xs font-medium leading-relaxed opacity-90">{{ currentFormImpact().reason }}</p>
+              @if (currentFormImpact().recommendation) {
+                <p class="text-[11px] font-bold italic opacity-85">💡 {{ currentFormImpact().recommendation }}</p>
+              }
+              @if (currentFormImpact().betterWindow) {
+                <div class="pt-2 border-t border-amber-300/50 flex items-center justify-between gap-2 mt-1">
+                  <span class="text-[10px] font-bold uppercase tracking-wider text-amber-900/80">
+                    Finestra migliore: {{ currentFormImpact().betterWindow?.dateLabel }}
+                  </span>
+                  <button
+                    type="button"
+                    (click)="applyBetterWindow(currentFormImpact().betterWindow?.date)"
+                    class="px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded-full text-[10px] font-bold uppercase tracking-wider transition-all shadow-xs shrink-0 cursor-pointer"
+                  >
+                    Sposta al {{ currentFormImpact().betterWindow?.dateLabel }}
+                  </button>
+                </div>
+              }
+            </div>
+          }
+
           @if (isEditingPastEvent()) {
             <div class="space-y-6">
               <div class="bg-camp-cream/20 p-4 rounded-xl border border-camp-sand/40 space-y-2">
@@ -868,6 +920,8 @@ interface DayCell {
 export class CalendarComponent implements OnInit {
   private calendarService = inject(CalendarService);
   private landService = inject(LandService);
+  private weatherService = inject(WeatherService);
+  private weatherImpactService = inject(WeatherImpactService);
 
   readonly weekdayLabels = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'];
   readonly dayHours = [
@@ -878,6 +932,8 @@ export class CalendarComponent implements OnInit {
   events = signal<CalendarEvent[]>([]);
   farms = signal<Farm[]>([]);
   selectedFarmId = signal<string | null>(null);
+  weatherData = signal<WeatherData | null>(null);
+
   isLoading = signal(true);
   isLoadingSuggestions = signal(true);
   suggestedEvents = signal<CalendarEvent[]>([]);
@@ -1034,10 +1090,40 @@ export class CalendarComponent implements OnInit {
     return this.getWeekDays(this.currentDate());
   });
 
+  currentFormImpact = computed<WeatherImpactEvaluation>(() => {
+    const startD = this.formStartDate();
+    const type = this.formType();
+    const title = this.formTitle();
+    const farmId = this.formFarmId() || this.selectedFarmId() || '';
+
+    const dummyEvent: CalendarEvent = {
+      farm_id: farmId,
+      title: title || 'Nuova attività',
+      type: type,
+      start: startD ? `${startD}T09:00:00.000Z` : new Date().toISOString(),
+      end: startD ? `${startD}T10:00:00.000Z` : new Date().toISOString(),
+      all_day: this.formAllDay(),
+      source: 'user',
+      status: 'confirmed'
+    };
+
+    return this.weatherImpactService.evaluateEventImpact(dummyEvent, this.weatherData());
+  });
+
   async ngOnInit() {
     await this.loadFarms();
     await this.loadEvents();
     await this.loadSuggestions();
+  }
+
+  getImpact(event: CalendarEvent): WeatherImpactEvaluation {
+    return this.weatherImpactService.evaluateEventImpact(event, this.weatherData());
+  }
+
+  applyBetterWindow(dateStr: string | undefined) {
+    if (!dateStr) return;
+    this.formStartDate.set(dateStr);
+    this.formEndDate.set(dateStr);
   }
 
   async loadSuggestions() {
@@ -1088,12 +1174,23 @@ export class CalendarComponent implements OnInit {
       const list = await this.landService.getFarms();
       this.farms.set(list);
       if (list && list.length > 0) {
-        this.selectedFarmId.set(list[0].id || null);
-        this.formFarmId.set(list[0].id || '');
+        const farm = list[0];
+        this.selectedFarmId.set(farm.id || null);
+        this.formFarmId.set(farm.id || '');
+        if (farm.latitude && farm.longitude) {
+          this.loadWeatherForFarm(farm.latitude, farm.longitude);
+        }
       }
     } catch (e) {
       console.error('[CalendarComponent] Errore caricamento terreni:', e);
     }
+  }
+
+  private loadWeatherForFarm(lat: number, lon: number) {
+    this.weatherService.getWeather(lat, lon).subscribe({
+      next: data => this.weatherData.set(data),
+      error: err => console.error('[CalendarComponent] Errore caricamento meteo:', err)
+    });
   }
 
   async loadEvents() {
@@ -1111,6 +1208,10 @@ export class CalendarComponent implements OnInit {
   onFarmChange(event: Event) {
     const val = (event.target as HTMLSelectElement).value;
     this.selectedFarmId.set(val || null);
+    const farm = this.farms().find(f => f.id === val);
+    if (farm && farm.latitude && farm.longitude) {
+      this.loadWeatherForFarm(farm.latitude, farm.longitude);
+    }
   }
 
   setView(view: 'month' | 'week' | 'day') {
@@ -1326,7 +1427,6 @@ export class CalendarComponent implements OnInit {
     return days;
   }
 
-  // drag & drop events
   onDragStart(event: DragEvent, calendarEvent: CalendarEvent) {
     if (!event.dataTransfer || !calendarEvent.id) return;
     this.draggedEvent.set(calendarEvent);
@@ -1640,6 +1740,10 @@ export class CalendarComponent implements OnInit {
   selectActiveFarm(farmId: string | null | undefined) {
     this.selectedFarmId.set(farmId || null);
     this.openDropdown.set(null);
+    const farm = this.farms().find(f => f.id === farmId);
+    if (farm && farm.latitude && farm.longitude) {
+      this.loadWeatherForFarm(farm.latitude, farm.longitude);
+    }
   }
 
   selectType(type: 'maintenance' | 'harvest' | 'irrigation' | 'other') {
@@ -1679,7 +1783,6 @@ export class CalendarComponent implements OnInit {
     this.openDropdown.set(null);
   }
 
-
   selectTime(time: string, type: 'start' | 'end') {
     if (type === 'start') {
       this.formStartTime.set(time);
@@ -1700,7 +1803,6 @@ export class CalendarComponent implements OnInit {
     }
     this.openDropdown.set(null);
   }
-
 
   getSelectedTypeLabel(): string {
     const type = this.formType();
