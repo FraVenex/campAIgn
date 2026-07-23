@@ -481,7 +481,7 @@ import { PlantPopupComponent, PlantPopupData } from "../../shared/components/pla
 					icon="🌳"
 					(close)="isAddModalOpen.set(false)"
 				>
-					<div class="border-b border-camp-sand/30 flex">
+					<div class="-mx-6 -mt-6 md:-mx-8 md:-mt-8 mb-6 border-b border-camp-sand/30 flex">
 						<button
 							(click)="addTab.set('single')"
 							[class]="addTab() === 'single' ? 'flex-1 py-3 text-sm font-bold border-b-2 border-camp-sage text-camp-sage' : 'flex-1 py-3 text-sm text-camp-olive hover:text-camp-earth'"
@@ -496,7 +496,7 @@ import { PlantPopupComponent, PlantPopupData } from "../../shared/components/pla
 						</button>
 					</div>
 
-					<div class="p-8 space-y-6">
+					<div class="space-y-6">
 						@if (addTab() === "single") {
 							<div class="space-y-1">
 								<label class="text-xs uppercase font-bold tracking-widest text-camp-olive">Nome (opzionale)</label>
@@ -685,7 +685,7 @@ import { PlantPopupComponent, PlantPopupData } from "../../shared/components/pla
 					[icon]="bulkActionType() === 'treatment' ? '💧' : bulkActionType() === 'maintenance' ? '🔧' : '🌿'"
 					(close)="bulkActionType.set(null)"
 				>
-					<div class="p-8 space-y-6">
+					<div class="space-y-6">
 						<div class="space-y-1">
 							<label class="text-xs uppercase font-bold tracking-widest text-camp-olive font-bold">Titolo Attività</label>
 							<input
@@ -930,7 +930,7 @@ import { PlantPopupComponent, PlantPopupData } from "../../shared/components/pla
 					icon="⚠️"
 					(close)="isDeleteConfirmOpen.set(false)"
 				>
-					<div class="p-8">
+					<div>
 						<p class="text-sm text-camp-earth leading-relaxed">
 							Sei sicuro di voler eliminare definitivamente <strong>{{ selectedPlantIds().size }}</strong> piante? Questa azione non può essere annullata.
 						</p>

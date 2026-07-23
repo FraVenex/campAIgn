@@ -392,7 +392,7 @@ export interface PlantPhoto {
 				icon="🔧"
 				(close)="showMaintenanceDialog.set(false)"
 			>
-				<div class="p-8 space-y-6">
+				<div class="space-y-6">
 					<div class="space-y-1.5">
 						<label class="text-xs uppercase font-bold tracking-widest text-camp-olive">Titolo attività</label>
 						<input

@@ -7,16 +7,13 @@ import { CommonModule } from '@angular/common';
   imports: [CommonModule],
   template: `
     <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8">
-      <!-- Backdrop -->
       <div 
         class="absolute inset-0 bg-camp-earth/40 backdrop-blur-sm transition-opacity duration-300"
         (click)="close.emit()"
       ></div>
 
-      <!-- Modal -->
       <div class="relative w-full max-w-5xl max-h-[90vh] bg-white rounded-camp-xl shadow-2xl overflow-hidden flex flex-col animate-scale-in border border-camp-sand/30">
-        <!-- Header -->
-        <div class="px-8 py-6 border-b border-camp-sand/30 flex items-center justify-between bg-camp-cream/30">
+        <div class="px-6 md:px-8 py-6 border-b border-camp-sand/30 flex items-center justify-between bg-camp-cream/30">
           <div class="flex items-center gap-4">
             @if (icon()) {
               <div class="w-12 h-12 rounded-2xl bg-camp-sage/10 text-camp-sage flex items-center justify-center shadow-inner">
@@ -47,12 +44,10 @@ import { CommonModule } from '@angular/common';
           </button>
         </div>
 
-        <!-- Content -->
-        <div class="flex-1 overflow-y-auto custom-scrollbar">
+        <div class="flex-1 overflow-y-auto custom-scrollbar p-6 md:p-8">
           <ng-content></ng-content>
         </div>
 
-        <!-- Footer (Optional) -->
         <ng-content select="[footer]"></ng-content>
       </div>
     </div>
