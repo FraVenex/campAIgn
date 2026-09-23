@@ -85,7 +85,63 @@ import { LandService, Farm } from '../../core/services/land.service';
                   <p class="text-sm text-camp-olive">Caricamento attività in corso...</p>
                 </div>
               } @else {
-                <div class="overflow-x-auto rounded-camp border border-camp-sand/30 shadow-sm bg-white">
+                <!-- Mobile Card List View -->
+                <div class="md:hidden space-y-3">
+                  @for (event of pastEvents(); track event.id) {
+                    <div class="p-4 bg-camp-cream/20 border border-camp-sand/40 rounded-2xl space-y-3">
+                      <div class="flex items-start justify-between gap-2">
+                        <div class="flex items-start gap-2.5 min-w-0">
+                          <span class="text-xl shrink-0 mt-0.5">{{ getEventIcon(event.type) }}</span>
+                          <div class="min-w-0">
+                            <h4 class="font-serif font-bold text-sm text-camp-earth truncate">{{ event.title }}</h4>
+                            <p class="text-[10px] text-camp-olive font-bold uppercase tracking-wider mt-0.5">
+                              {{ event.start | date:'dd/MM/yyyy HH:mm' }}
+                            </p>
+                          </div>
+                        </div>
+                        <div class="flex items-center gap-1.5 shrink-0">
+                          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wide {{ getEventStatusClass(getEventCompletionStatus(event)) }}">
+                            {{ getEventStatusLabel(getEventCompletionStatus(event)) }}
+                          </span>
+                          @if (getEventCompletionStatus(event) === 'completata_note') {
+                            <button 
+                              (click)="openNoteDialog(event)" 
+                              type="button" 
+                              class="w-6 h-6 rounded-full bg-camp-sand/40 flex items-center justify-center text-xs text-camp-earth hover:bg-camp-sand/70 transition-all shadow-sm"
+                              title="Leggi note"
+                            >
+                              📝
+                            </button>
+                          }
+                        </div>
+                      </div>
+
+                      @if (getEventNotes(event)) {
+                        <p class="text-xs text-camp-olive/80 bg-white/60 p-2.5 rounded-xl border border-camp-sand/30 leading-relaxed">
+                          {{ getEventNotes(event) }}
+                        </p>
+                      }
+
+                      <div class="pt-1 flex justify-end">
+                        <button 
+                          (click)="openEditModal(event)" 
+                          class="w-full py-2 bg-camp-sage/10 text-camp-sage border border-camp-sage/20 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-camp-sage/20 transition-all shadow-xs text-center cursor-pointer"
+                        >
+                          Gestisci Attività
+                        </button>
+                      </div>
+                    </div>
+                  } @empty {
+                    <div class="text-center py-12 text-camp-olive">
+                      <span class="text-4xl block mb-2">📂</span>
+                      <h4 class="text-base font-serif text-camp-earth mb-0.5">Nessuna attività passata</h4>
+                      <p class="text-xs text-camp-olive/80 max-w-sm mx-auto">Non ci sono ancora attività registrate nel passato per questo terreno.</p>
+                    </div>
+                  }
+                </div>
+
+                <!-- Desktop Table View -->
+                <div class="hidden md:block overflow-x-auto rounded-camp border border-camp-sand/30 shadow-sm bg-white">
                   <table class="w-full text-left border-collapse">
                     <thead>
                       <tr class="bg-camp-cream/20 border-b border-camp-sand/30 text-xs font-bold uppercase tracking-wider text-camp-olive">
@@ -227,27 +283,76 @@ import { LandService, Farm } from '../../core/services/land.service';
             ></textarea>
           </div>
 
-          <div class="flex items-center justify-end gap-3 pt-4 border-t border-camp-sand/30">
-            <button 
-              type="button" 
-              (click)="closeEditModal()" 
-              class="px-4 py-2.5 rounded-camp border border-camp-sand/40 text-sm font-bold text-camp-olive hover:bg-camp-cream transition-all shadow-sm"
-              [disabled]="isActionLoading()"
-            >
-              Annulla
-            </button>
-            <button 
-              type="button" 
-              (click)="onSaveEvent()" 
-              class="px-5 py-2.5 rounded-camp bg-camp-sage text-white text-sm font-bold hover:bg-camp-sage/90 transition-all disabled:opacity-50 shadow-sm flex items-center gap-2"
-              [disabled]="isActionLoading()"
-            >
-              @if (isActionLoading()) {
-                <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-              }
-              Salva Stato
-            </button>
+          <div class="flex items-center justify-between gap-3 pt-4 border-t border-camp-sand/30">
+            <div>
+              <button 
+                type="button" 
+                (click)="openDeleteConfirm()" 
+                class="px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-red-500 hover:bg-red-50 rounded-full transition-all border border-red-200 cursor-pointer"
+                [disabled]="isActionLoading()"
+              >
+                Elimina Attività
+              </button>
+            </div>
+            <div class="flex items-center gap-3">
+              <button 
+                type="button" 
+                (click)="closeEditModal()" 
+                class="px-4 py-2.5 rounded-camp border border-camp-sand/40 text-sm font-bold text-camp-olive hover:bg-camp-cream transition-all shadow-sm cursor-pointer"
+                [disabled]="isActionLoading()"
+              >
+                Annulla
+              </button>
+              <button 
+                type="button" 
+                (click)="onSaveEvent()" 
+                class="px-5 py-2.5 rounded-camp bg-camp-sage text-white text-sm font-bold hover:bg-camp-sage/90 transition-all disabled:opacity-50 shadow-sm flex items-center gap-2 cursor-pointer"
+                [disabled]="isActionLoading()"
+              >
+                @if (isActionLoading()) {
+                  <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                }
+                Salva Stato
+              </button>
+            </div>
           </div>
+        </div>
+      </app-camp-dialog>
+    }
+
+    @if (showDeleteConfirm()) {
+      <app-camp-dialog
+        title="Conferma Eliminazione"
+        subtitle="Operazione Irreversibile"
+        icon="⚠️"
+        maxWidth="max-w-lg"
+        (close)="showDeleteConfirm.set(false)"
+      >
+        <div class="space-y-3">
+          <p class="text-sm text-camp-earth leading-relaxed">
+            Sei sicuro di voler eliminare definitivamente l'attività <strong>"{{ editingEvent()?.title }}"</strong> dall'archivio?
+          </p>
+          <p class="text-xs text-camp-olive/80 leading-relaxed">
+            Questa operazione non può essere annullata e rimuoverà l'intervento anche dal database.
+          </p>
+        </div>
+
+        <div footer class="px-8 py-5 bg-camp-cream/30 border-t border-camp-sand/30 flex justify-end gap-3">
+          <button
+            type="button"
+            (click)="showDeleteConfirm.set(false)"
+            class="px-5 py-2.5 border border-camp-sand/60 rounded-camp text-xs font-bold uppercase tracking-wider text-camp-olive hover:bg-camp-cream/40 transition-colors cursor-pointer"
+          >
+            Annulla
+          </button>
+          <button
+            type="button"
+            (click)="confirmDeleteEvent()"
+            [disabled]="isActionLoading()"
+            class="px-5 py-2.5 bg-red-600 hover:bg-red-500 text-white rounded-camp text-xs font-bold uppercase tracking-wider transition-colors disabled:opacity-50 cursor-pointer"
+          >
+            Elimina Attività
+          </button>
         </div>
       </app-camp-dialog>
     }
@@ -297,6 +402,7 @@ export class ArchiveComponent implements OnInit {
   showFarmDropdown = signal(false);
 
   showEditModal = signal(false);
+  showDeleteConfirm = signal(false);
   editingEvent = signal<CalendarEvent | null>(null);
   formPastStatus = signal<'completata' | 'completata_note' | 'non_completata'>('non_completata');
   formDescription = signal('');
@@ -409,7 +515,29 @@ export class ArchiveComponent implements OnInit {
 
   closeEditModal() {
     this.showEditModal.set(false);
+    this.showDeleteConfirm.set(false);
     this.editingEvent.set(null);
+  }
+
+  openDeleteConfirm() {
+    this.showDeleteConfirm.set(true);
+  }
+
+  async confirmDeleteEvent() {
+    const activeEdit = this.editingEvent();
+    if (!activeEdit || !activeEdit.id) return;
+
+    this.isActionLoading.set(true);
+    try {
+      await this.calendarService.deleteEvent(activeEdit.id);
+      await this.loadEvents();
+      this.showDeleteConfirm.set(false);
+      this.closeEditModal();
+    } catch (e) {
+      console.error('[ArchiveComponent] Errore cancellazione attività:', e);
+    } finally {
+      this.isActionLoading.set(false);
+    }
   }
 
   onDescriptionInput(event: Event) {

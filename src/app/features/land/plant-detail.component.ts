@@ -278,7 +278,7 @@ export interface PlantPhoto {
 										<span class="text-4xl opacity-40">📷</span>
 										<div>
 											<p class="text-sm font-semibold text-camp-earth">Carica foto della pianta</p>
-											<p class="text-xs text-camp-olive/60 mt-1">Clicca o trascina qui le immagini (JPG, PNG, WebP)</p>
+											<p class="text-xs text-camp-olive/60 mt-1">Scatta una foto, seleziona o trascina immagini (JPG, PNG, WebP)</p>
 										</div>
 									</div>
 								}
@@ -324,8 +324,11 @@ export interface PlantPhoto {
 											/>
 											<div class="absolute inset-0 bg-camp-earth/0 group-hover:bg-camp-earth/20 transition-all duration-300 flex items-end justify-start p-2">
 												<button
-													(click)="deletePhoto(photo)"
-													class="opacity-0 group-hover:opacity-100 transition-opacity bg-camp-error text-white rounded-full w-7 h-7 flex items-center justify-center text-xs shadow-md"
+													type="button"
+													(click)="requestDeletePhoto(photo)"
+													class="opacity-90 md:opacity-0 group-hover:opacity-100 transition-opacity bg-camp-error text-white rounded-full w-8 h-8 flex items-center justify-center text-xs shadow-md cursor-pointer hover:scale-110 active:scale-95"
+													title="Elimina foto"
+													aria-label="Elimina foto"
 												>
 													🗑
 												</button>
@@ -502,6 +505,43 @@ export interface PlantPhoto {
 				</div>
 			</app-camp-dialog>
 		}
+
+		@if (photoToDelete()) {
+			<app-camp-dialog
+				title="Conferma Eliminazione"
+				subtitle="Operazione Irreversibile"
+				icon="⚠️"
+				maxWidth="max-w-lg"
+				(close)="photoToDelete.set(null)"
+			>
+				<div class="space-y-3">
+					<p class="text-sm text-camp-earth leading-relaxed">
+						Sei sicuro di voler eliminare questa fotografia dalla galleria della pianta?
+					</p>
+					<p class="text-xs text-camp-olive/80 leading-relaxed">
+						L'immagine verrà rimossa definitivamente e non potrà essere recuperata.
+					</p>
+				</div>
+
+				<div footer class="px-8 py-5 bg-camp-cream/30 border-t border-camp-sand/30 flex justify-end gap-3">
+					<button
+						type="button"
+						(click)="photoToDelete.set(null)"
+						class="px-5 py-2.5 border border-camp-sand/60 rounded-camp text-xs font-bold uppercase tracking-wider text-camp-olive hover:bg-camp-cream/40 transition-colors cursor-pointer"
+					>
+						Annulla
+					</button>
+					<button
+						type="button"
+						(click)="confirmDeletePhoto()"
+						[disabled]="isDeletingPhoto()"
+						class="px-5 py-2.5 bg-red-600 hover:bg-red-500 text-white rounded-camp text-xs font-bold uppercase tracking-wider transition-colors disabled:opacity-50 cursor-pointer"
+					>
+						Elimina Foto
+					</button>
+				</div>
+			</app-camp-dialog>
+		}
 	`,
 	styles: [`
 		:host { display: block; }
@@ -535,6 +575,8 @@ export class PlantDetailComponent implements OnInit {
 	isDragging = signal(false);
 	uploadError = signal<string | null>(null);
 	uploadSuccess = signal(false);
+	photoToDelete = signal<PlantPhoto | null>(null);
+	isDeletingPhoto = signal(false);
 
 	farmName = signal<string | null>(null);
 
@@ -820,13 +862,24 @@ export class PlantDetailComponent implements OnInit {
 		this.isUploading.set(false);
 	}
 
-	async deletePhoto(photo: PlantPhoto) {
+	requestDeletePhoto(photo: PlantPhoto) {
+		this.photoToDelete.set(photo);
+	}
+
+	async confirmDeletePhoto() {
+		const photo = this.photoToDelete();
+		if (!photo) return;
+
+		this.isDeletingPhoto.set(true);
 		try {
 			await this.supabaseService.client.storage.from("plant-photos").remove([photo.storage_path]);
 			await this.supabaseService.client.from("plant_photos").delete().eq("id", photo.id);
 			this.photos.update(prev => prev.filter(p => p.id !== photo.id));
+			this.photoToDelete.set(null);
 		} catch (err: any) {
 			this.uploadError.set("Impossibile eliminare la foto: " + (err.message || ""));
+		} finally {
+			this.isDeletingPhoto.set(false);
 		}
 	}
 

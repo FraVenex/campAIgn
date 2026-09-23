@@ -14,7 +14,7 @@ serve(async (req: Request) => {
 
 	try {
 		const apiKey = Deno.env.get("GEMINI_API_KEY");
-		const model = Deno.env.get("GEMINI_MODEL") || "gemini-3.6-flash";
+		const model = Deno.env.get("GEMINI_MODEL") || "gemini-3.8-flash";
 
 		if (!apiKey) {
 			return new Response(
@@ -87,23 +87,20 @@ ${JSON.stringify(groundingContext, null, 2)}`;
 			});
 		}
 
-		const response = await fetch(
-			`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-			{
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({
-					systemInstruction: {
-						parts: [{ text: systemInstruction }]
-					},
-					contents: contents,
-					generationConfig: {
-						temperature: 0.2,
-						responseMimeType: "application/json"
-					}
-				})
-			}
-		);
+		const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({
+				systemInstruction: {
+					parts: [{ text: systemInstruction }]
+				},
+				contents: contents,
+				generationConfig: {
+					temperature: 0.2,
+					responseMimeType: "application/json"
+				}
+			})
+		});
 
 		if (!response.ok) {
 			const errText = await response.text();
@@ -134,12 +131,9 @@ ${JSON.stringify(groundingContext, null, 2)}`;
 			headers: { ...corsHeaders, "Content-Type": "application/json" }
 		});
 	} catch (err: any) {
-		return new Response(
-			JSON.stringify({ error: err?.message || "Errore del server Arnaldo AI." }),
-			{
-				status: 500,
-				headers: { ...corsHeaders, "Content-Type": "application/json" }
-			}
-		);
+		return new Response(JSON.stringify({ error: err?.message || "Errore del server Arnaldo AI." }), {
+			status: 500,
+			headers: { ...corsHeaders, "Content-Type": "application/json" }
+		});
 	}
 });

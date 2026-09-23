@@ -1,9 +1,10 @@
 # Stato del Progetto
 
-## Data Ultimo Aggiornamento: 2026-05-14
+## Data Ultimo Aggiornamento: 2026-09-23
 
 ## Stato Attuale
 - **Design System**: Refactor completo. Rimozione DaisyUI, palette camp/ estesa con tokens semantici (ombre, radius, animazioni). Classi utility camp-* (input, btn, card, alert, glass).
+- **Responsive Mobile & Ergonomia**: Ottimizzazione completa per smartphone (Portrait e Landscape) e tablet. Safe areas (`env(safe-area-inset)`), Bottom Navigation Bar fissa per thumb zone, disattivazione auto-zoom iOS Safari su input (<16px), touch target minimi (36-44px), modali trasformati in Bottom Sheet scorrevoli su mobile.
 - **Auth Flow**: Redesign completo Login/Register con glassmorphism, accessibilità (label+id, autocomplete, aria-label), redirect intelligente post-login basato su onboarding_completed.
 - **Routing / State Machine**: Guard system riscritto — guestGuard (login/register), onboardingGuard, appGuard. Naming coerente, logica centralizzata senza ambiguità.
 - **Onboarding**: Finalizzato con Step 3 per disposizione (Regolare/Irregolare), inserimento manuale piante e persistenza sulla tabella `farms`.
@@ -11,6 +12,15 @@
 
 ## Cosa Esiste
 - [x] Design system camp/ con Tailwind tokens e classi component-level
+- [x] Responsive Design Multi-Device (Mobile Portrait, Mobile Landscape, Tablet, Desktop)
+  - Bottom Navigation Bar mobile con navigazione rapida (Home, Terreno, Meteo, Agenda, Archivio)
+  - Supporto Notch / Home bar con `viewport-fit=cover` e classi `.pt-safe`, `.pb-safe`
+  - Vista Agenda nel Calendario per smartphone con card informative e filtri vista
+  - Bottom Sheet reattivo per la pianta selezionata nella Mappa del Terreno
+  - Card view verticale per l'Archivio Attività su schermi piccoli (in sostituzione di tabelle orizzontali)
+  - Modali con comportamento Bottom Sheet su portrait e scroll compatto in landscape
+  - Strip orizzontale scorrevole per le previsioni meteo 5 giorni
+  - Arnaldo Assistant mobile-first (full screen drawer con gestione tastiera)
 - [x] Auth: Login e Register con design premium e UX coerente
 - [x] Guard system robusto a 3 livelli (guest, onboarding, app)
 - [x] Onboarding multi-step con card selection, geolocalizzazione, range slider
@@ -23,7 +33,11 @@
 - [x] **Mappa del Terreno**: Visualizzazione 2D interattiva delle piante con sfondo a parcelle, icone ad albero e tooltip intelligenti.
 - [x] **Dettaglio Pianta**: Route dedicata `/land/plant/:id` con informazioni dettagliate e consigli di Arnaldo per singola pianta.
 - [x] **Slice B - Gestione Layout e Piante**:
-  - Modalità Modifica Layout con drag & drop reattivo e posizionamento libero (tra 5% e 95%).
+  - Modalità Modifica Layout con drag & drop reattivo e posizionamento libero (tra 5% e 95%) con snap geometrico e reticolo visibile durante l'editing.
+  - Mutua esclusione rigorosa tra "Seleziona Piante", "Modifica Terreno" e "Aggiungi Piante" nella toolbar.
+  - Rimozione pulsanti zoom fisici (+ e -) ridondanti a favore delle gesture native (pinch-to-zoom touch e rotella mouse).
+  - Coordinamento visibilità FAB Arnaldo AI durante selezioni/modifiche per azzerare qualsiasi sovrapposizione visiva.
+  - Barra azioni selezione mobile ancorata a filo fondo schermo (`bottom-0 z-40 pb-safe`) con Bottom Sheet dedicato per le azioni bulk, garantendo visuale totale e libera sul terreno.
   - Inserimento di nuove piante singole (con nome, specie e stato) o multiple (con generazione automatica e posizionamento).
   - Selezione singola e multipla reattiva (con anelli di selezione grafici).
   - Azioni di gruppo (bulk actions) per eliminazione bulk e pianificazione attività (trattamento, manutenzione) con persistenza sul calendario e tabelle relazionali Supabase (`event_plants`).

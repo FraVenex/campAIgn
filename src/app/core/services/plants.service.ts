@@ -88,26 +88,37 @@ export class PlantsService {
 		const species = speciesMap[mainCrop] || "Pianta";
 
 		const plants: Omit<Plant, "user_id">[] = [];
-		const cols = Math.ceil(Math.sqrt(count));
-		const rows = Math.ceil(count / cols);
+		const gridCols = 16;
+		const gridRows = 12;
+		const xMin = 5;
+		const xStep = 6;
+		const yMin = 7;
+		const yStep = 8;
 
-		const xStep = 80 / (cols + 1);
-		const yStep = 80 / (rows + 1);
+		// Se le piante sono poche rispetto al campo, distanzia i filari
+		const colStride = count <= 48 ? 2 : 1;
+		let col = 0;
+		let row = 0;
 
 		for (let i = 0; i < count; i++) {
-			const col = i % cols;
-			const row = Math.floor(i / cols);
-			const x = 10 + (col + 1) * xStep;
-			const y = 10 + (row + 1) * yStep;
+			const x = parseFloat((xMin + col * xStep).toFixed(2));
+			const y = parseFloat((yMin + row * yStep).toFixed(2));
 
 			plants.push({
 				farm_id: farmId,
 				name: `${species} ${i + 1}`,
 				species: species,
-				position_x: parseFloat(x.toFixed(2)),
-				position_y: parseFloat(y.toFixed(2)),
+				position_x: x,
+				position_y: y,
 				status: "Non Valutato"
 			});
+
+			col += colStride;
+			if (col >= gridCols) {
+				col = 0;
+				row++;
+				if (row >= gridRows) row = 0;
+			}
 		}
 		return plants;
 	}

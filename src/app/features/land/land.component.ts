@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, OnInit, HostListener, ChangeDetectorRef } from "@angular/core";
+import { Component, inject, signal, computed, OnInit, OnDestroy, HostListener, ChangeDetectorRef } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { RouterLink } from "@angular/router";
@@ -6,6 +6,7 @@ import { AppLayoutComponent } from "../../shared/components/app-layout/app-layou
 import { LandService, Farm } from "../../core/services/land.service";
 import { PlantsService, Plant } from "../../core/services/plants.service";
 import { CalendarService, CalendarEvent } from "../../core/services/calendar.service";
+import { ArnaldoService } from "../../core/services/arnaldo.service";
 import { CampCardComponent } from "../../shared/components/camp-card/camp-card.component";
 import { CampDialogComponent } from "../../shared/components/camp-dialog/camp-dialog.component";
 import { CampDatePickerComponent } from "../../shared/components/camp-date-picker/camp-date-picker.component";
@@ -18,7 +19,7 @@ import { PlantPopupComponent, PlantPopupData } from "../../shared/components/pla
 	imports: [CommonModule, FormsModule, RouterLink, AppLayoutComponent, CampCardComponent, CampDialogComponent, CampDatePickerComponent, CampTimePickerComponent, PlantPopupComponent],
 	template: `
 		<app-layout>
-			<div class="max-w-7xl mx-auto space-y-6 animate-fade-in relative pb-10">
+			<div class="max-w-7xl mx-auto space-y-6 animate-fade-in relative pb-28 md:pb-10">
 				<div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
 					<div>
 						<nav class="flex items-center gap-2 text-xs text-camp-olive mb-1 uppercase tracking-widest font-bold">
@@ -129,22 +130,7 @@ import { PlantPopupComponent, PlantPopupData } from "../../shared/components/pla
 							<div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
 								<div>
 									<h3 class="text-xl font-serif text-camp-earth">Mappa Interattiva</h3>
-									<p class="text-xs text-camp-olive mt-0.5">Clicca su una pianta per visualizzarne la scheda completa o filtrale per stato.</p>
-								</div>
-
-								<div class="flex flex-wrap items-center gap-2">
-									@for (s of ["Tutti", "Ottimo", "Attenzione", "Stressato"]; track s) {
-										<button
-											(click)="setStatusFilter(s)"
-											[class]="
-												statusFilter() === s
-													? 'px-3 py-1.5 bg-camp-sage text-white text-xs font-bold uppercase tracking-wider rounded-full transition-all'
-													: 'px-3 py-1.5 bg-camp-cream hover:bg-camp-sand/40 text-camp-earth text-xs font-bold uppercase tracking-wider rounded-full border border-camp-sand/30 transition-all'
-											"
-										>
-											{{ s }}
-										</button>
-									}
+									<p class="text-xs text-camp-olive mt-0.5">Clicca su una pianta per visualizzarne la scheda completa o cercala per nome, specie o stato.</p>
 								</div>
 							</div>
 
@@ -155,99 +141,114 @@ import { PlantPopupComponent, PlantPopupData } from "../../shared/components/pla
 										type="text"
 										[ngModel]="searchQuery()"
 										(ngModelChange)="searchQuery.set($event)"
-										placeholder="Cerca pianta per nome o specie..."
+										placeholder="Cerca pianta per nome, specie o stato..."
 										class="w-full bg-transparent text-sm text-camp-earth placeholder-camp-olive/40 focus:outline-none"
 									/>
 								</div>
 
-								<div class="flex items-center gap-2">
+								<div class="flex flex-wrap items-center gap-2">
 									@if (farms().length > 0) {
 										<button
-											(click)="toggleEditMode()"
+											type="button"
+											(click)="toggleSelectMode()"
+											[disabled]="isSelectDisabled()"
 											[class]="
-												isEditMode()
-													? 'px-4 py-2.5 bg-camp-terracotta hover:bg-camp-bark text-white rounded-camp text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-sm transition-all duration-300'
-													: 'px-4 py-2.5 bg-camp-sage hover:bg-camp-earth text-white rounded-camp text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-sm transition-all duration-300'
+												interactionMode() === 'select'
+													? 'px-3.5 sm:px-4 py-2 sm:py-2.5 bg-camp-sage text-white rounded-camp text-[11px] sm:text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-inner ring-2 ring-camp-sage/40 transition-all duration-200 cursor-pointer'
+													: isSelectDisabled()
+														? 'px-3.5 sm:px-4 py-2 sm:py-2.5 bg-camp-sand/20 text-camp-olive/40 rounded-camp text-[11px] sm:text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 border border-camp-sand/20 shadow-none cursor-not-allowed opacity-40 pointer-events-none'
+														: 'px-3.5 sm:px-4 py-2 sm:py-2.5 bg-camp-cream hover:bg-camp-sand/40 text-camp-earth rounded-camp text-[11px] sm:text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 border border-camp-sand/40 shadow-sm transition-all duration-200 cursor-pointer'
 											"
 										>
-											@if (isEditMode()) {
-												<span>Termina Modifica</span>
-											} @else {
-												<span>Modifica Terreno</span>
-											}
+											<span>☑️</span>
+											<span>Seleziona Piante</span>
 										</button>
 
-											<button
-												(click)="openAddModal()"
-												[disabled]="isEditMode()"
-												[class]="isEditMode()
-													? 'px-4 py-2.5 bg-camp-sand/50 text-camp-olive/40 text-xs font-bold uppercase tracking-wider rounded-camp flex items-center gap-1.5 shadow-sm cursor-not-allowed opacity-50'
-													: 'px-4 py-2.5 bg-camp-sage hover:bg-camp-earth text-white text-xs font-bold uppercase tracking-wider rounded-camp flex items-center gap-1.5 shadow-sm transition-all duration-300 cursor-pointer'
-												"
-											>
-												<span>Aggiungi Piante</span>
-											</button>
+										<button
+											type="button"
+											(click)="toggleMoveMode()"
+											[disabled]="isMoveDisabled()"
+											[class]="
+												interactionMode() === 'move'
+													? 'px-3.5 sm:px-4 py-2 sm:py-2.5 bg-camp-terracotta text-white rounded-camp text-[11px] sm:text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-inner ring-2 ring-camp-terracotta/40 transition-all duration-200 cursor-pointer'
+													: isMoveDisabled()
+														? 'px-3.5 sm:px-4 py-2 sm:py-2.5 bg-camp-sand/20 text-camp-olive/40 rounded-camp text-[11px] sm:text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 border border-camp-sand/20 shadow-none cursor-not-allowed opacity-40 pointer-events-none'
+														: 'px-3.5 sm:px-4 py-2 sm:py-2.5 bg-camp-cream hover:bg-camp-sand/40 text-camp-earth rounded-camp text-[11px] sm:text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 border border-camp-sand/40 shadow-sm transition-all duration-200 cursor-pointer'
+											"
+										>
+											<span>✋</span>
+											<span>Modifica Terreno</span>
+										</button>
+
+										<div class="h-6 w-px bg-camp-sand/40 mx-0.5 hidden sm:block"></div>
+
+										<button
+											type="button"
+											(click)="openAddModal()"
+											[disabled]="isAddDisabled()"
+											[class]="
+												isAddDisabled()
+													? 'px-3.5 sm:px-4 py-2 sm:py-2.5 bg-camp-sand/20 text-camp-olive/40 text-[11px] sm:text-xs font-bold uppercase tracking-wider rounded-camp flex items-center gap-1.5 border border-camp-sand/20 shadow-none cursor-not-allowed opacity-40 pointer-events-none'
+													: 'px-3.5 sm:px-4 py-2 sm:py-2.5 bg-camp-cream hover:bg-camp-sand/40 text-camp-earth text-[11px] sm:text-xs font-bold uppercase tracking-wider rounded-camp flex items-center gap-1.5 border border-camp-sand/40 shadow-sm transition-all duration-200 cursor-pointer'
+											"
+										>
+											<span class="text-camp-sage font-bold">➕</span>
+											<span>Aggiungi Piante</span>
+										</button>
 									}
 								</div>
 							</div>
 
-							@if (isEditMode()) {
-								<div class="mb-4 bg-camp-terracotta/10 border border-camp-terracotta/20 rounded-xl p-3.5 flex flex-col sm:flex-row sm:items-center gap-3 animate-slide-up">
-									<div class="flex items-start gap-3 flex-grow">
-										<span class="text-base mt-0.5">⚙️</span>
-										<div>
-											<p class="text-xs font-bold text-camp-terracotta uppercase tracking-wider">Modalità Modifica Attiva</p>
-											<p class="text-xs text-camp-earth/80 mt-1">
-												@if (editSubMode() === 'select') { Clicca le piante per selezionarle e applicare azioni di gruppo. }
-												@else { Trascina una pianta per spostarla sul terreno. }
-											</p>
-										</div>
+							@if (interactionMode() === 'select') {
+								<div class="mb-4 bg-camp-sage/10 border border-camp-sage/30 rounded-xl p-3 px-4 flex items-center justify-between gap-3 animate-slide-up">
+									<div class="flex items-center gap-2.5">
+										<span class="text-base">☑️</span>
+										<p class="text-xs text-camp-earth">
+											<strong class="font-bold text-camp-sage">Selezione Piante:</strong> Clicca sulle piante per selezionarle e applicare azioni di gruppo.
+										</p>
 									</div>
-									<div class="flex items-center gap-1.5 bg-white/60 border border-camp-sand/40 rounded-xl p-1 self-start sm:self-auto shrink-0">
+									<button
+										type="button"
+										(click)="toggleSelectMode()"
+										class="px-3 py-1 bg-camp-sage hover:bg-camp-earth text-white rounded-lg text-xs font-bold uppercase tracking-wider transition-colors shrink-0 cursor-pointer flex items-center gap-1"
+									>
+										<span>✕</span>
+										<span>Fine</span>
+									</button>
+								</div>
+							}
+
+							@if (interactionMode() === 'move') {
+								<div class="mb-4 bg-camp-terracotta/10 border border-camp-terracotta/20 rounded-xl p-3 px-4 flex flex-wrap items-center justify-between gap-3 animate-slide-up">
+									<div class="flex items-center gap-2.5">
+										<span class="text-base">✋</span>
+										<p class="text-xs text-camp-earth">
+											<strong class="font-bold text-camp-terracotta">Modifica Terreno:</strong> Trascina le piante per posizionarle sui punti del reticolo.
+										</p>
+									</div>
+									<div class="flex items-center gap-2">
 										<button
 											type="button"
-											(click)="editSubMode.set('select')"
-											[class]="editSubMode() === 'select'
-												? 'px-3 py-1.5 bg-camp-terracotta text-white rounded-lg text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-sm'
-												: 'px-3 py-1.5 text-camp-earth/60 rounded-lg text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 hover:bg-camp-sand/30 transition-colors'
-											"
+											(click)="alignAllToGrid()"
+											class="px-2.5 py-1 bg-white hover:bg-camp-cream text-camp-terracotta border border-camp-terracotta/30 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors shrink-0 cursor-pointer flex items-center gap-1 shadow-sm"
+											title="Allinea tutte le piante ai nodi liberi del reticolo"
 										>
-											<span>☑️</span><span>Seleziona</span>
+											<span>⚡</span>
+											<span>Allinea al Reticolo</span>
 										</button>
 										<button
 											type="button"
-											(click)="editSubMode.set('move')"
-											[class]="editSubMode() === 'move'
-												? 'px-3 py-1.5 bg-camp-terracotta text-white rounded-lg text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-sm'
-												: 'px-3 py-1.5 text-camp-earth/60 rounded-lg text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 hover:bg-camp-sand/30 transition-colors'
-											"
+											(click)="toggleMoveMode()"
+											class="px-3 py-1 bg-camp-terracotta hover:bg-camp-bark text-white rounded-lg text-xs font-bold uppercase tracking-wider transition-colors shrink-0 cursor-pointer flex items-center gap-1"
 										>
-											<span>✋</span><span>Sposta</span>
+											<span>✕</span>
+											<span>Fine</span>
 										</button>
 									</div>
 								</div>
 							}
 
-							<div class="relative w-full aspect-[4/3] border border-camp-sand/40 rounded-camp shadow-inner bg-camp-sand/10 overflow-hidden">
-								<div class="absolute bottom-4 right-4 z-[55] flex flex-col shadow-camp-sm rounded-xl overflow-hidden border border-camp-sand/40">
-									<button 
-										type="button" 
-										(click)="zoomIn()" 
-										[disabled]="zoom() >= 4" 
-										[class.opacity-40]="zoom() >= 4" 
-										class="w-10 h-10 bg-white/90 backdrop-blur flex items-center justify-center text-camp-earth hover:bg-white transition-colors border-b border-camp-sand/40 font-bold text-xl cursor-pointer disabled:cursor-not-allowed" 
-										title="Zoom In"
-									>+</button>
-									<button 
-										type="button" 
-										(click)="zoomOut()" 
-										[disabled]="zoom() <= 1" 
-										[class.opacity-40]="zoom() <= 1" 
-										class="w-10 h-10 bg-white/90 backdrop-blur flex items-center justify-center text-camp-earth hover:bg-white transition-colors font-bold text-2xl cursor-pointer leading-none disabled:cursor-not-allowed" 
-										title="Zoom Out"
-									>−</button>
-								</div>
-
+							<div class="relative w-full aspect-[4/3] max-h-[72vh] landscape:max-h-[calc(100vh-130px)] landscape:w-auto landscape:aspect-[4/3] landscape:mx-auto border border-camp-sand/40 rounded-camp shadow-inner bg-camp-sand/10 overflow-hidden">
 								<div 
 									#scrollContainer
 									class="w-full h-full overflow-auto relative map-scroll-container cursor-grab active:cursor-grabbing touch-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
@@ -262,7 +263,7 @@ import { PlantPopupComponent, PlantPopupData } from "../../shared/components/pla
 									(touchcancel)="onTouchEnd()"
 								>
 									<div 
-										class="map-container relative bg-gradient-to-br from-[#dfd7bf] to-[#c7beaa] select-none origin-top-left min-h-full" 
+										class="map-container relative bg-gradient-to-br from-[#dfd7bf] to-[#c7beaa] select-none origin-top-left w-full h-full" 
 										[style.width.%]="zoom() * 100"
 										[style.height.%]="zoom() * 100"
 										(click)="closePlantPopup()"
@@ -273,53 +274,93 @@ import { PlantPopupComponent, PlantPopupData } from "../../shared/components/pla
 										>
 											<defs>
 												<pattern
-											id="parcels"
-											width="100"
-											height="100"
-											patternUnits="userSpaceOnUse"
-										>
+													id="parcels"
+													width="100"
+													height="100"
+													patternUnits="userSpaceOnUse"
+												>
+													<rect
+														width="100"
+														height="100"
+														fill="none"
+														stroke="currentColor"
+														stroke-width="1.5"
+													/>
+													<line
+														x1="0"
+														y1="25"
+														x2="100"
+														y2="25"
+														stroke="currentColor"
+														stroke-width="0.75"
+														stroke-dasharray="3 3"
+													/>
+													<line
+														x1="0"
+														y1="50"
+														x2="100"
+														y2="50"
+														stroke="currentColor"
+														stroke-width="0.75"
+														stroke-dasharray="3 3"
+													/>
+													<line
+														x1="0"
+														y1="75"
+														x2="100"
+														y2="75"
+														stroke="currentColor"
+														stroke-width="0.75"
+														stroke-dasharray="3 3"
+													/>
+												</pattern>
+											</defs>
 											<rect
-												width="100"
-												height="100"
-												fill="none"
-												stroke="currentColor"
-												stroke-width="1.5"
+												width="100%"
+												height="100%"
+												fill="url(#parcels)"
 											/>
-											<line
-												x1="0"
-												y1="25"
-												x2="100"
-												y2="25"
-												stroke="currentColor"
-												stroke-width="0.75"
-												stroke-dasharray="3 3"
-											/>
-											<line
-												x1="0"
-												y1="50"
-												x2="100"
-												y2="50"
-												stroke="currentColor"
-												stroke-width="0.75"
-												stroke-dasharray="3 3"
-											/>
-											<line
-												x1="0"
-												y1="75"
-												x2="100"
-												y2="75"
-												stroke="currentColor"
-												stroke-width="0.75"
-												stroke-dasharray="3 3"
-											/>
-										</pattern>
-									</defs>
-									<rect
-										width="100%"
-										height="100%"
-										fill="url(#parcels)"
-									/>
-								</svg>
+
+											<!-- Reticolo geometrico del terreno: visibile SOLO in modalità Modifica Terreno -->
+											@if (interactionMode() === 'move') {
+												<!-- Linee verticali del reticolo -->
+												@for (colX of gridColsLines; track colX) {
+													<line
+														[attr.x1]="colX + '%'"
+														y1="7%"
+														[attr.x2]="colX + '%'"
+														y2="95%"
+														stroke="#964f26"
+														stroke-width="1.2"
+														stroke-dasharray="3 3"
+														opacity="0.35"
+													/>
+												}
+												<!-- Linee orizzontali del reticolo -->
+												@for (rowY of gridRowsLines; track rowY) {
+													<line
+														x1="5%"
+														[attr.y1]="rowY + '%'"
+														x2="95%"
+														[attr.y2]="rowY + '%'"
+														stroke="#964f26"
+														stroke-width="1.2"
+														stroke-dasharray="3 3"
+														opacity="0.35"
+													/>
+												}
+												<!-- Nodi del reticolo: punti discreti di aggancio -->
+												@for (node of gridNodes; track node.x + '-' + node.y) {
+													<circle
+														[attr.cx]="node.x + '%'"
+														[attr.cy]="node.y + '%'"
+														r="2.5"
+														fill="#964f26"
+														opacity="0.4"
+													/>
+												}
+											}
+										</svg>
 
 								@for (t of grassTufts(); track t.x + "-" + t.y) {
 									<span
@@ -339,52 +380,270 @@ import { PlantPopupComponent, PlantPopupData } from "../../shared/components/pla
 										[style.left.%]="p.position_x"
 										[style.top.%]="p.position_y"
 									>
-										@if (!isEditMode()) {
+										@if (interactionMode() === 'view') {
 											<button
 												type="button"
 												(click)="$event.stopPropagation(); openPlantPopup(p)"
 												[class]="getPlantMarkerClass(p)"
-												class="w-9 h-9 transform -translate-x-1/2 -translate-y-1/2 rounded-full transition-all duration-300 flex items-center justify-center cursor-pointer shadow-md select-none hover:scale-125 focus:outline-none animate-scale-in"
+												class="w-5 h-5 sm:w-7 sm:h-7 md:w-9 md:h-9 transform -translate-x-1/2 -translate-y-1/2 rounded-full transition-all duration-300 flex items-center justify-center cursor-pointer shadow-md select-none hover:scale-125 focus:outline-none animate-scale-in before:content-[''] before:absolute before:-inset-2 before:rounded-full"
 											>
-												<span class="text-base select-none">🌳</span>
+												<span class="text-[9px] sm:text-xs md:text-base select-none leading-none">🌳</span>
 											</button>
-										} @else {
-											<div
-												(mousedown)="editSubMode() === 'move' ? onDragStart($event, p) : null"
-												(touchstart)="editSubMode() === 'move' ? onDragStart($event, p) : null"
-												(click)="editSubMode() === 'select' ? toggleSelection(p, $event) : null"
+										} @else if (interactionMode() === 'select') {
+											<button
+												type="button"
+												(click)="toggleSelection(p, $event)"
 												[class]="getPlantMarkerClass(p)"
-												[class.ring-4]="selectedPlantIds().has(p.id!) && editSubMode() === 'select'"
-												[class.ring-camp-sage]="selectedPlantIds().has(p.id!) && editSubMode() === 'select'"
-												[class.cursor-move]="editSubMode() === 'move'"
-												[class.cursor-pointer]="editSubMode() === 'select'"
-												class="w-9 h-9 transform -translate-x-1/2 -translate-y-1/2 rounded-full transition-all duration-300 flex items-center justify-center shadow-md select-none hover:scale-125 focus:outline-none animate-scale-in"
+												[class.ring-2]="selectedPlantIds().has(p.id!)"
+												[class.md:ring-4]="selectedPlantIds().has(p.id!)"
+												[class.ring-camp-sage]="selectedPlantIds().has(p.id!)"
+												[class.scale-110]="selectedPlantIds().has(p.id!)"
+												class="relative w-5 h-5 sm:w-7 sm:h-7 md:w-9 md:h-9 transform -translate-x-1/2 -translate-y-1/2 rounded-full transition-all duration-300 flex items-center justify-center cursor-pointer shadow-md select-none hover:scale-125 focus:outline-none animate-scale-in before:content-[''] before:absolute before:-inset-2 before:rounded-full"
 											>
-												<span class="text-base select-none">🌳</span>
+												<span class="text-[9px] sm:text-xs md:text-base select-none leading-none">🌳</span>
+												@if (selectedPlantIds().has(p.id!)) {
+													<span class="absolute -top-1 -right-1 w-3 h-3 md:w-4 md:h-4 bg-camp-sage text-white text-[7px] md:text-[10px] font-bold rounded-full flex items-center justify-center shadow">✓</span>
+												}
+											</button>
+										} @else if (interactionMode() === 'move') {
+											<div
+												(mousedown)="onDragStart($event, p)"
+												(touchstart)="onDragStart($event, p)"
+												[class]="getPlantMarkerClass(p)"
+												class="w-5 h-5 sm:w-7 sm:h-7 md:w-9 md:h-9 transform -translate-x-1/2 -translate-y-1/2 rounded-full transition-all duration-300 flex items-center justify-center shadow-md select-none hover:scale-125 focus:outline-none animate-scale-in cursor-move active:cursor-grabbing before:content-[''] before:absolute before:-inset-2 before:rounded-full"
+											>
+												<span class="text-[9px] sm:text-xs md:text-base select-none leading-none">🌳</span>
 											</div>
 										}
 
-										@if (!isEditMode() && activePopupPlantId() === p.id && activePopupData()) {
-											<app-plant-popup
-												[data]="activePopupData()!"
-												(close)="closePlantPopup()"
-											/>
+										@if (interactionMode() === 'view' && activePopupPlantId() === p.id && activePopupData()) {
+											<div class="hidden md:block">
+												<app-plant-popup
+													[data]="activePopupData()!"
+													(close)="closePlantPopup()"
+												/>
+											</div>
 										}
 									</div>
 								}
 									</div>
 								</div>
 							</div>
+
+							<!-- Mobile Bottom Sheet Scheda Pianta -->
+							@if (interactionMode() === 'view' && activePopupPlantId() && activePopupData()) {
+								<div class="md:hidden fixed bottom-20 inset-x-3 z-40 bg-white/95 backdrop-blur-md rounded-2xl shadow-camp-xl border border-camp-sand/60 p-4 animate-slide-up">
+									<div class="flex items-start justify-between gap-3">
+										<div class="flex items-center gap-3 min-w-0">
+											<div
+												class="w-10 h-10 rounded-full flex items-center justify-center text-xl shrink-0 border"
+												[class]="getPlantMarkerClass(activePopupData()!.plant)"
+											>
+												🌳
+											</div>
+											<div class="min-w-0">
+												<div class="flex items-center gap-2">
+													<h4 class="font-serif font-bold text-sm text-camp-earth truncate">{{ activePopupData()!.plant.name || 'Pianta' }}</h4>
+													<span class="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-camp-sand/40 text-camp-earth">
+														{{ activePopupData()!.plant.status || 'Non Valutato' }}
+													</span>
+												</div>
+												<p class="text-xs text-camp-olive mt-0.5 truncate">{{ activePopupData()!.plant.species }} · ({{ activePopupData()!.plant.position_x }}%, {{ activePopupData()!.plant.position_y }}%)</p>
+											</div>
+										</div>
+										<button
+											type="button"
+											(click)="closePlantPopup()"
+											class="w-8 h-8 rounded-full hover:bg-camp-sand/30 flex items-center justify-center text-camp-olive cursor-pointer shrink-0"
+										>
+											✕
+										</button>
+									</div>
+
+									@if (activePopupData()!.lastEvent) {
+										<div class="mt-2.5 pt-2.5 border-t border-camp-sand/30 flex items-center justify-between text-xs text-camp-olive">
+											<span class="font-medium text-[11px] opacity-70">Ultima attività:</span>
+											<span class="font-bold text-camp-earth truncate max-w-[180px]">{{ activePopupData()!.lastEvent!.title }}</span>
+										</div>
+									}
+
+									<div class="mt-3 flex gap-2">
+										<a
+											[routerLink]="['/land/plant', activePopupData()!.plant.id]"
+											class="flex-1 py-2 bg-camp-sage hover:bg-camp-earth text-white text-xs font-bold uppercase tracking-wider rounded-xl text-center shadow-sm transition-colors"
+										>
+											Apri Scheda Dettaglio
+										</a>
+									</div>
+								</div>
+							}
 						</div>
 					}
 				}
 			</div>
 
-			@if (isEditMode() && selectedPlantIds().size > 0) {
+			@if (interactionMode() === 'select' && selectedPlantIds().size > 0) {
+				<!-- Mobile: Barra flottante compatta SUBITO SOPRA la bottom navigation bar (non la copre) -->
 				<div
-					class="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-[45] bg-camp-earth/95 text-white px-6 py-4 rounded-camp-xl shadow-camp-xl flex flex-col md:flex-row items-stretch md:items-center gap-4 md:gap-6 border border-white/10 backdrop-blur animate-scale-in"
+					class="md:hidden fixed bottom-[calc(4.25rem+env(safe-area-inset-bottom,0px))] inset-x-3 z-40 bg-camp-earth/95 text-white px-4 py-2.5 rounded-2xl shadow-camp-xl border border-white/10 backdrop-blur flex items-center justify-between gap-3 animate-slide-up"
 				>
-					<div class="flex items-center gap-3 pr-2 border-b md:border-b-0 md:border-r border-white/10 pb-3 md:pb-0">
+					<div class="flex items-center gap-2.5">
+						<span class="w-7 h-7 rounded-lg bg-white/15 flex items-center justify-center text-sm shadow-inner">🌳</span>
+						<div class="flex items-baseline gap-1.5">
+							<span class="text-sm font-bold text-white leading-none">{{ selectedPlantIds().size }}</span>
+							<span class="text-[11px] text-white/70">{{ selectedPlantIds().size === 1 ? 'selezionata' : 'selezionate' }}</span>
+						</div>
+					</div>
+
+					<div class="flex items-center gap-2">
+						<button
+							type="button"
+							(click)="clearSelection()"
+							class="px-2.5 py-1.5 hover:bg-white/10 text-white/80 hover:text-white rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+						>
+							Deseleziona
+						</button>
+						<button
+							type="button"
+							(click)="isBulkSheetOpen.set(true)"
+							class="px-3.5 py-1.5 bg-camp-sage hover:bg-camp-sage-light text-white rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-sm active:scale-95 transition-all cursor-pointer"
+						>
+							<span>Azioni</span>
+							<span>⚡</span>
+						</button>
+					</div>
+				</div>
+
+				<!-- Mobile: Bottom Sheet Modale Azioni di Gruppo (aperto solo al tocco di 'Azioni') -->
+				@if (isBulkSheetOpen()) {
+					<div
+						class="md:hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm animate-fade-in"
+						(click)="isBulkSheetOpen.set(false)"
+					></div>
+
+					<div class="md:hidden fixed bottom-0 inset-x-0 z-50 bg-white rounded-t-3xl shadow-camp-xl border-t border-camp-sand/50 p-5 pb-safe animate-slide-up max-h-[85vh] overflow-y-auto">
+						<div class="w-12 h-1.5 bg-camp-sand/60 rounded-full mx-auto mb-4"></div>
+
+						<div class="flex items-center justify-between mb-4">
+							<div class="flex items-center gap-2.5">
+								<span class="w-9 h-9 rounded-xl bg-camp-sage/10 text-camp-sage flex items-center justify-center text-lg">🌳</span>
+								<div>
+									<h4 class="font-serif font-bold text-base text-camp-earth">{{ selectedPlantIds().size }} Piante Selezionate</h4>
+									<p class="text-[11px] text-camp-olive">Scegli l'azione di gruppo da applicare</p>
+								</div>
+							</div>
+							<button
+								type="button"
+								(click)="isBulkSheetOpen.set(false)"
+								class="w-8 h-8 rounded-full bg-camp-cream hover:bg-camp-sand/30 flex items-center justify-center text-camp-olive text-sm cursor-pointer"
+							>
+								✕
+							</button>
+						</div>
+
+						<!-- Azioni rapide di selezione -->
+						<div class="flex items-center gap-2 mb-4 bg-camp-cream/50 p-1.5 rounded-xl border border-camp-sand/40">
+							<button
+								type="button"
+								(click)="selectAll()"
+								class="flex-1 py-1.5 text-xs font-bold text-camp-earth hover:bg-white rounded-lg transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+							>
+								<span>✓</span>
+								<span>Seleziona Tutte</span>
+							</button>
+							<div class="w-px h-4 bg-camp-sand/60"></div>
+							<button
+								type="button"
+								(click)="clearSelection(); isBulkSheetOpen.set(false)"
+								class="flex-1 py-1.5 text-xs font-bold text-camp-olive hover:bg-white rounded-lg transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+							>
+								<span>✕</span>
+								<span>Deseleziona</span>
+							</button>
+						</div>
+
+						<!-- Griglia Azioni Touch-Friendly -->
+						<div class="grid grid-cols-2 gap-2.5">
+							<button
+								type="button"
+								(click)="openBulkModal('treatment')"
+								class="p-3 bg-camp-sage/10 hover:bg-camp-sage/20 border border-camp-sage/30 rounded-xl flex items-center gap-2.5 text-left transition-all active:scale-98 cursor-pointer"
+							>
+								<span class="text-xl">💧</span>
+								<div>
+									<p class="text-xs font-bold text-camp-earth">Trattamento</p>
+									<p class="text-[10px] text-camp-olive">Fitosanitario</p>
+								</div>
+							</button>
+
+							<button
+								type="button"
+								(click)="openBulkModal('maintenance')"
+								class="p-3 bg-camp-terracotta/10 hover:bg-camp-terracotta/20 border border-camp-terracotta/30 rounded-xl flex items-center gap-2.5 text-left transition-all active:scale-98 cursor-pointer"
+							>
+								<span class="text-xl">🔧</span>
+								<div>
+									<p class="text-xs font-bold text-camp-earth">Manutenzione</p>
+									<p class="text-[10px] text-camp-olive">Potatura o sfalcio</p>
+								</div>
+							</button>
+
+							<button
+								type="button"
+								(click)="openBulkModal('harvest')"
+								class="p-3 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-xl flex items-center gap-2.5 text-left transition-all active:scale-98 cursor-pointer"
+							>
+								<span class="text-xl">🫒</span>
+								<div>
+									<p class="text-xs font-bold text-camp-earth">Raccolta</p>
+									<p class="text-[10px] text-camp-olive">Registra resa</p>
+								</div>
+							</button>
+
+							<button
+								type="button"
+								(click)="openDirectStatusModal()"
+								class="p-3 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-xl flex items-center gap-2.5 text-left transition-all active:scale-98 cursor-pointer"
+							>
+								<span class="text-xl">🩺</span>
+								<div>
+									<p class="text-xs font-bold text-camp-earth">Definisci Stato</p>
+									<p class="text-[10px] text-camp-olive">Aggiorna salute</p>
+								</div>
+							</button>
+
+							<button
+								type="button"
+								(click)="openBulkModal('other')"
+								class="p-3 bg-camp-cream hover:bg-camp-sand/30 border border-camp-sand/50 rounded-xl flex items-center gap-2.5 text-left transition-all active:scale-98 cursor-pointer"
+							>
+								<span class="text-xl">📅</span>
+								<div>
+									<p class="text-xs font-bold text-camp-earth">Nuova Attività</p>
+									<p class="text-[10px] text-camp-olive">Personalizzata</p>
+								</div>
+							</button>
+
+							<button
+								type="button"
+								(click)="openDeleteConfirm()"
+								class="p-3 bg-red-50 hover:bg-red-100 border border-red-200 rounded-xl flex items-center gap-2.5 text-left transition-all active:scale-98 cursor-pointer"
+							>
+								<span class="text-xl">🗑️</span>
+								<div>
+									<p class="text-xs font-bold text-red-700">Elimina</p>
+									<p class="text-[10px] text-red-500">Rimuovi piante</p>
+								</div>
+							</button>
+						</div>
+					</div>
+				}
+
+				<!-- Desktop / Tablet: Barra Flottante Orizzontale Ricca Classica -->
+				<div
+					class="hidden md:flex fixed bottom-6 left-1/2 transform -translate-x-1/2 z-[45] bg-camp-earth/95 text-white px-6 py-4 rounded-camp-xl shadow-camp-xl items-center gap-6 border border-white/10 backdrop-blur animate-scale-in max-w-3xl"
+				>
+					<div class="flex items-center gap-3 pr-4 border-r border-white/10">
 						<span class="flex items-center justify-center w-10 h-10 rounded-xl bg-white/10 text-lg shadow-inner">🌳</span>
 						<div class="flex flex-col">
 							<span class="text-[10px] uppercase tracking-wider text-white/50 font-bold leading-none">Selezionate</span>
@@ -456,6 +715,20 @@ import { PlantPopupComponent, PlantPopupData } from "../../shared/components/pla
 								<span>Manutenzione</span>
 							</button>
 							<button
+								(click)="openBulkModal('harvest')"
+								class="px-3.5 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
+							>
+								<span>🫒</span>
+								<span>Raccolta</span>
+							</button>
+							<button
+								(click)="openDirectStatusModal()"
+								class="px-3.5 py-2 bg-emerald-700 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
+							>
+								<span>🩺</span>
+								<span>Definisci Stato</span>
+							</button>
+							<button
 								(click)="openBulkModal('other')"
 								class="px-3.5 py-2 bg-white/10 hover:bg-white/15 text-white border border-white/10 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer"
 							>
@@ -479,7 +752,7 @@ import { PlantPopupComponent, PlantPopupData } from "../../shared/components/pla
 					title="Aggiungi Piante"
 					subtitle="Mappa del Terreno"
 					icon="🌳"
-					(close)="isAddModalOpen.set(false)"
+					(close)="closeAddModal()"
 				>
 					<div class="-mx-6 -mt-6 md:-mx-8 md:-mt-8 mb-6 border-b border-camp-sand/30 flex">
 						<button
@@ -663,7 +936,7 @@ import { PlantPopupComponent, PlantPopupData } from "../../shared/components/pla
 						class="px-8 py-6 bg-camp-cream/30 border-t border-camp-sand/30 flex justify-end gap-4"
 					>
 						<button
-							(click)="isAddModalOpen.set(false)"
+							(click)="closeAddModal()"
 							class="px-5 py-2.5 border border-camp-sand/60 rounded-camp text-sm font-bold uppercase tracking-wider text-camp-olive hover:bg-camp-cream/40"
 						>
 							Annulla
@@ -680,9 +953,9 @@ import { PlantPopupComponent, PlantPopupData } from "../../shared/components/pla
 
 			@if (bulkActionType()) {
 				<app-camp-dialog
-					[title]="bulkActionType() === 'treatment' ? 'Associa Trattamento' : bulkActionType() === 'maintenance' ? 'Associa Manutenzione' : 'Associa Attività'"
+					[title]="bulkActionType() === 'treatment' ? 'Associa Trattamento' : bulkActionType() === 'maintenance' ? 'Associa Manutenzione' : bulkActionType() === 'harvest' ? 'Associa Raccolta' : 'Associa Attività'"
 					subtitle="Azioni di Gruppo"
-					[icon]="bulkActionType() === 'treatment' ? '💧' : bulkActionType() === 'maintenance' ? '🔧' : '🌿'"
+					[icon]="bulkActionType() === 'treatment' ? '💧' : bulkActionType() === 'maintenance' ? '🔧' : bulkActionType() === 'harvest' ? '🫒' : '🌿'"
 					(close)="bulkActionType.set(null)"
 				>
 					<div class="space-y-6">
@@ -923,11 +1196,97 @@ import { PlantPopupComponent, PlantPopupData } from "../../shared/components/pla
 				</app-camp-dialog>
 			}
 
+			@if (isDirectStatusModalOpen()) {
+				<app-camp-dialog
+					title="Definisci Stato Piante"
+					subtitle="Azioni di Gruppo ({{ selectedPlantIds().size }} piante)"
+					icon="🩺"
+					(close)="isDirectStatusModalOpen.set(false)"
+				>
+					<div class="space-y-4">
+						<p class="text-xs text-camp-earth/80">
+							Seleziona lo stato di salute da assegnare a tutte le <strong>{{ selectedPlantIds().size }}</strong> piante selezionate:
+						</p>
+
+						<div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+							<button
+								type="button"
+								(click)="directStatusValue.set('Ottimo')"
+								[class]="
+									directStatusValue() === 'Ottimo'
+										? 'p-4 rounded-xl border-2 border-camp-success bg-camp-success-light/30 flex flex-col items-center gap-2 text-center transition-all shadow-sm'
+										: 'p-4 rounded-xl border border-camp-sand/40 bg-white hover:bg-camp-cream/20 flex flex-col items-center gap-2 text-center transition-all'
+								"
+							>
+								<span class="text-2xl">🟢</span>
+								<div>
+									<p class="text-xs font-bold text-camp-earth">Ottimo</p>
+									<p class="text-[10px] text-camp-olive mt-0.5">Vigore e salute ideali</p>
+								</div>
+							</button>
+
+							<button
+								type="button"
+								(click)="directStatusValue.set('Attenzione')"
+								[class]="
+									directStatusValue() === 'Attenzione'
+										? 'p-4 rounded-xl border-2 border-camp-amber bg-camp-amber-light/30 flex flex-col items-center gap-2 text-center transition-all shadow-sm'
+										: 'p-4 rounded-xl border border-camp-sand/40 bg-white hover:bg-camp-cream/20 flex flex-col items-center gap-2 text-center transition-all'
+								"
+							>
+								<span class="text-2xl">🟡</span>
+								<div>
+									<p class="text-xs font-bold text-camp-earth">Attenzione</p>
+									<p class="text-[10px] text-camp-olive mt-0.5">Stress o anomalie lievi</p>
+								</div>
+							</button>
+
+							<button
+								type="button"
+								(click)="directStatusValue.set('Stressato')"
+								[class]="
+									directStatusValue() === 'Stressato'
+										? 'p-4 rounded-xl border-2 border-camp-error bg-camp-error-light/30 flex flex-col items-center gap-2 text-center transition-all shadow-sm'
+										: 'p-4 rounded-xl border border-camp-sand/40 bg-white hover:bg-camp-cream/20 flex flex-col items-center gap-2 text-center transition-all'
+								"
+							>
+								<span class="text-2xl">🔴</span>
+								<div>
+									<p class="text-xs font-bold text-camp-earth">Stressato</p>
+									<p class="text-[10px] text-camp-olive mt-0.5">Intervento urgente</p>
+								</div>
+							</button>
+						</div>
+					</div>
+
+					<div
+						footer
+						class="px-8 py-6 bg-camp-cream/30 border-t border-camp-sand/30 flex justify-end gap-4"
+					>
+						<button
+							type="button"
+							(click)="isDirectStatusModalOpen.set(false)"
+							class="px-5 py-2.5 border border-camp-sand/60 rounded-camp text-sm font-bold uppercase tracking-wider text-camp-olive hover:bg-camp-cream/40 cursor-pointer"
+						>
+							Annulla
+						</button>
+						<button
+							type="button"
+							(click)="saveDirectStatus()"
+							class="px-5 py-2.5 bg-camp-sage hover:bg-camp-earth text-white rounded-camp text-sm font-bold uppercase tracking-wider cursor-pointer"
+						>
+							Salva Stato
+						</button>
+					</div>
+				</app-camp-dialog>
+			}
+
 			@if (isDeleteConfirmOpen()) {
 				<app-camp-dialog
 					title="Conferma Eliminazione"
 					subtitle="Operazione Irreversibile"
 					icon="⚠️"
+					maxWidth="max-w-lg"
 					(close)="isDeleteConfirmOpen.set(false)"
 				>
 					<div>
@@ -981,25 +1340,33 @@ import { PlantPopupComponent, PlantPopupData } from "../../shared/components/pla
 	`,
 	styles: []
 })
-export class LandComponent implements OnInit {
+export class LandComponent implements OnInit, OnDestroy {
 	private landService = inject(LandService);
 	private plantsService = inject(PlantsService);
 	private calendarService = inject(CalendarService);
+	private arnaldoService = inject(ArnaldoService);
 	private cdr = inject(ChangeDetectorRef);
+
+	ngOnDestroy() {
+		this.arnaldoService.setFabVisible(true);
+	}
 
 	farms = signal<Farm[]>([]);
 	selectedFarm = signal<Farm | null>(null);
 	plants = signal<Plant[]>([]);
 	isLoading = signal(true);
 	loadingPlants = signal(false);
-	statusFilter = signal<string>("Tutti");
 	searchQuery = signal<string>("");
 	grassTufts = signal<{ x: number; y: number }[]>([]);
 
-	isEditMode = signal(false);
-	editSubMode = signal<'select' | 'move'>('select');
+	interactionMode = signal<'view' | 'select' | 'move'>('view');
 	selectedPlantIds = signal<Set<string>>(new Set());
+	isBulkSheetOpen = signal(false);
 	isAddModalOpen = signal(false);
+
+	isSelectDisabled = computed(() => this.interactionMode() === 'move' || this.isAddModalOpen());
+	isMoveDisabled = computed(() => this.interactionMode() === 'select' || this.isAddModalOpen());
+	isAddDisabled = computed(() => this.interactionMode() !== 'view');
 	openDropdown = signal<string | null>(null);
 	addTab = signal<"single" | "multiple">("single");
 	newName = signal("");
@@ -1007,7 +1374,7 @@ export class LandComponent implements OnInit {
 	newStatus = signal("Ottimo");
 	newQuantity = signal(5);
 	newMultipleSpecies = signal("Olivo");
-	bulkActionType = signal<"treatment" | "maintenance" | "other" | null>(null);
+	bulkActionType = signal<"treatment" | "maintenance" | "harvest" | "other" | null>(null);
 	bulkTitle = signal("");
 	bulkStartDate = signal("");
 	bulkEndDate = signal("");
@@ -1015,6 +1382,8 @@ export class LandComponent implements OnInit {
 	bulkEndTime = signal("10:00");
 	bulkDescription = signal("");
 	bulkStatus = signal("Nessuna Modifica");
+	isDirectStatusModalOpen = signal(false);
+	directStatusValue = signal<"Ottimo" | "Attenzione" | "Stressato">("Ottimo");
 	isDeleteConfirmOpen = signal(false);
 	toast = signal<{ message: string; type: "success" | "error" | "info" } | null>(null);
 
@@ -1023,6 +1392,29 @@ export class LandComponent implements OnInit {
 	activePopupPlantId = signal<string | null>(null);
 	activePopupData = signal<PlantPopupData | null>(null);
 
+
+	// Reticolo geometrico del terreno (16 colonne x 12 righe, aspect ratio 4:3 con maglia quadrata)
+	readonly GRID_COLS = 16;
+	readonly GRID_ROWS = 12;
+	readonly GRID_X_MIN = 5;
+	readonly GRID_X_STEP = 6;
+	readonly GRID_Y_MIN = 7;
+	readonly GRID_Y_STEP = 8;
+
+	readonly gridColsLines: number[] = Array.from({ length: 16 }, (_, i) => parseFloat((5 + i * 6).toFixed(2)));
+	readonly gridRowsLines: number[] = Array.from({ length: 12 }, (_, i) => parseFloat((7 + i * 8).toFixed(2)));
+	readonly gridNodes: { x: number; y: number }[] = (() => {
+		const nodes: { x: number; y: number }[] = [];
+		for (let r = 0; r < 12; r++) {
+			for (let c = 0; c < 16; c++) {
+				nodes.push({
+					x: parseFloat((5 + c * 6).toFixed(2)),
+					y: parseFloat((7 + r * 8).toFixed(2))
+				});
+			}
+		}
+		return nodes;
+	})();
 
 	private activeDragPlant: Plant | null = null;
 	private dragStartX = 0;
@@ -1044,11 +1436,14 @@ export class LandComponent implements OnInit {
 
 	filteredPlants = computed(() => {
 		const query = this.searchQuery().toLowerCase().trim();
-		const filter = this.statusFilter();
+		if (!query) {
+			return this.plants();
+		}
 		return this.plants().filter(p => {
-			const matchesQuery = p.name.toLowerCase().includes(query) || p.species.toLowerCase().includes(query);
-			const matchesFilter = filter === "Tutti" || p.status === filter;
-			return matchesQuery && matchesFilter;
+			const matchesName = p.name.toLowerCase().includes(query);
+			const matchesSpecies = p.species.toLowerCase().includes(query);
+			const matchesStatus = p.status ? p.status.toLowerCase().includes(query) : false;
+			return matchesName || matchesSpecies || matchesStatus;
 		});
 	});
 
@@ -1173,33 +1568,44 @@ export class LandComponent implements OnInit {
 		}
 	}
 
-	setStatusFilter(s: string) {
-		this.statusFilter.set(s);
-	}
-
 	getPlantMarkerClass(p: Plant): string {
 		let colorClass = "";
 		if (p.status === "Ottimo") {
-			colorClass = "border-2 border-camp-success bg-camp-success-light text-camp-success";
+			colorClass = "border md:border-2 border-camp-success bg-camp-success-light text-camp-success";
 		} else if (p.status === "Attenzione") {
-			colorClass = "border-2 border-camp-amber bg-camp-amber-light/30 text-camp-amber";
+			colorClass = "border md:border-2 border-camp-amber bg-camp-amber-light/30 text-camp-amber";
 		} else if (p.status === "Stressato") {
-			colorClass = "border-2 border-camp-error bg-camp-error-light text-camp-error";
+			colorClass = "border md:border-2 border-camp-error bg-camp-error-light text-camp-error";
 		} else {
-			colorClass = "border-2 border-camp-olive/40 bg-camp-sand/40 text-camp-olive";
+			colorClass = "border md:border-2 border-camp-olive/40 bg-camp-sand/40 text-camp-olive";
 		}
 
 		return colorClass;
 	}
 
-
-	toggleEditMode() {
-		this.isEditMode.set(!this.isEditMode());
-		if (this.isEditMode()) {
-			this.editSubMode.set('select');
-			this.closePlantPopup();
-		} else {
+	toggleSelectMode() {
+		if (this.interactionMode() === 'select') {
+			this.interactionMode.set('view');
 			this.clearSelection();
+			this.isBulkSheetOpen.set(false);
+			this.arnaldoService.setFabVisible(true);
+		} else {
+			this.interactionMode.set('select');
+			this.closePlantPopup();
+			this.arnaldoService.setFabVisible(false);
+		}
+	}
+
+	toggleMoveMode() {
+		if (this.interactionMode() === 'move') {
+			this.interactionMode.set('view');
+			this.arnaldoService.setFabVisible(true);
+		} else {
+			this.interactionMode.set('move');
+			this.closePlantPopup();
+			this.clearSelection();
+			this.isBulkSheetOpen.set(false);
+			this.arnaldoService.setFabVisible(false);
 		}
 	}
 
@@ -1245,7 +1651,7 @@ export class LandComponent implements OnInit {
 	private initialZoomOnPinch = 1;
 
 	onMapDragStart(event: MouseEvent, container: HTMLElement) {
-		if (event.button !== 0 || (this.isEditMode() && this.editSubMode() === 'move')) return;
+		if (event.button !== 0 || this.interactionMode() === 'move') return;
 		this.mapIsDragging = true;
 		this.mapDragStartX = event.clientX;
 		this.mapDragStartY = event.clientY;
@@ -1277,7 +1683,7 @@ export class LandComponent implements OnInit {
 	}
 
 	onTouchStart(event: TouchEvent, container: HTMLElement) {
-		if (event.touches.length === 1 && (!this.isEditMode() || this.editSubMode() !== 'move')) {
+		if (event.touches.length === 1 && this.interactionMode() !== 'move') {
 			this.mapIsDragging = true;
 			this.mapDragStartX = event.touches[0].clientX;
 			this.mapDragStartY = event.touches[0].clientY;
@@ -1375,6 +1781,87 @@ export class LandComponent implements OnInit {
 		this.newQuantity.set(5);
 		this.newMultipleSpecies.set("Olivo");
 		this.isAddModalOpen.set(true);
+		this.arnaldoService.setFabVisible(false);
+	}
+
+	closeAddModal() {
+		this.isAddModalOpen.set(false);
+		if (this.interactionMode() === 'view') {
+			this.arnaldoService.setFabVisible(true);
+		}
+	}
+
+	snapToGrid(rawX: number, rawY: number): { x: number; y: number } {
+		const colIndex = Math.round((rawX - this.GRID_X_MIN) / this.GRID_X_STEP);
+		const clampedCol = Math.max(0, Math.min(this.GRID_COLS - 1, colIndex));
+		const snappedX = parseFloat((this.GRID_X_MIN + clampedCol * this.GRID_X_STEP).toFixed(2));
+
+		const rowIndex = Math.round((rawY - this.GRID_Y_MIN) / this.GRID_Y_STEP);
+		const clampedRow = Math.max(0, Math.min(this.GRID_ROWS - 1, rowIndex));
+		const snappedY = parseFloat((this.GRID_Y_MIN + clampedRow * this.GRID_Y_STEP).toFixed(2));
+
+		return { x: snappedX, y: snappedY };
+	}
+
+	isNodeOccupied(x: number, y: number, excludePlantId?: string): boolean {
+		return this.plants().some(p => p.id !== excludePlantId && Math.abs(p.position_x - x) < 1.5 && Math.abs(p.position_y - y) < 1.5);
+	}
+
+	findAvailableGridSlots(count: number): { x: number; y: number }[] {
+		const available: { x: number; y: number }[] = [];
+		for (const node of this.gridNodes) {
+			if (!this.isNodeOccupied(node.x, node.y)) {
+				available.push(node);
+				if (available.length === count) break;
+			}
+		}
+		return available;
+	}
+
+	async alignAllToGrid() {
+		const currentPlants = [...this.plants()];
+		if (currentPlants.length === 0) return;
+
+		const occupiedSlots = new Set<string>();
+		const updates: { id: string; x: number; y: number }[] = [];
+
+		for (const plant of currentPlants) {
+			if (!plant.id) continue;
+			let bestNode = this.gridNodes[0];
+			let bestDist = Infinity;
+
+			for (const node of this.gridNodes) {
+				const key = `${node.x}_${node.y}`;
+				if (occupiedSlots.has(key)) continue;
+
+				const dx = plant.position_x - node.x;
+				const dy = (plant.position_y - node.y) * 0.75;
+				const dist = dx * dx + dy * dy;
+				if (dist < bestDist) {
+					bestDist = dist;
+					bestNode = node;
+				}
+			}
+
+			occupiedSlots.add(`${bestNode.x}_${bestNode.y}`);
+			updates.push({ id: plant.id, x: bestNode.x, y: bestNode.y });
+		}
+
+		const updatedPlants = currentPlants.map(p => {
+			const u = updates.find(item => item.id === p.id);
+			return u ? { ...p, position_x: u.x, position_y: u.y } : p;
+		});
+		this.plants.set(updatedPlants);
+
+		try {
+			for (const u of updates) {
+				await this.plantsService.updatePlant(u.id, { position_x: u.x, position_y: u.y });
+			}
+			this.showToast("Tutte le piante allineate con successo al reticolo", "success");
+		} catch (error) {
+			console.error(error);
+			this.showToast("Errore durante l'allineamento delle piante", "error");
+		}
 	}
 
 	async saveNewPlants() {
@@ -1383,12 +1870,14 @@ export class LandComponent implements OnInit {
 
 		try {
 			if (this.addTab() === "single") {
+				const availableSlots = this.findAvailableGridSlots(1);
+				const slot = availableSlots[0] || { x: 50, y: 50 };
 				const plantObj: Omit<Plant, "user_id"> = {
 					farm_id: farm.id,
 					name: this.newName().trim() || `${this.newSpecies()} Nuova`,
 					species: this.newSpecies(),
-					position_x: parseFloat((Math.random() * 80 + 10).toFixed(2)),
-					position_y: parseFloat((Math.random() * 80 + 10).toFixed(2)),
+					position_x: slot.x,
+					position_y: slot.y,
 					status: this.newStatus()
 				};
 				const created = await this.plantsService.createPlant(plantObj);
@@ -1396,31 +1885,34 @@ export class LandComponent implements OnInit {
 			} else {
 				const count = this.newQuantity();
 				const species = this.newMultipleSpecies();
+				const availableSlots = this.findAvailableGridSlots(count);
 				const newPlants: Omit<Plant, "user_id">[] = [];
 				for (let i = 0; i < count; i++) {
+					const slot = availableSlots[i] || { x: parseFloat((Math.random() * 80 + 10).toFixed(2)), y: parseFloat((Math.random() * 80 + 10).toFixed(2)) };
 					newPlants.push({
 						farm_id: farm.id,
 						name: `${species} Nuova ${this.plants().length + i + 1}`,
 						species: species,
-						position_x: parseFloat((Math.random() * 80 + 10).toFixed(2)),
-						position_y: parseFloat((Math.random() * 80 + 10).toFixed(2)),
+						position_x: slot.x,
+						position_y: slot.y,
 						status: "Ottimo"
 					});
 				}
 				const created = await this.plantsService.createPlants(newPlants);
 				this.plants.set([...this.plants(), ...created]);
 			}
-			this.showToast("Piante aggiunte con successo", "success");
-			this.isAddModalOpen.set(false);
+			this.showToast("Piante aggiunte sul reticolo", "success");
+			this.closeAddModal();
 		} catch (error) {
 			console.error(error);
 			this.showToast("Errore durante l'aggiunta delle piante", "error");
 		}
 	}
 
-	openBulkModal(type: "treatment" | "maintenance" | "other") {
+	openBulkModal(type: "treatment" | "maintenance" | "harvest" | "other") {
+		this.isBulkSheetOpen.set(false);
 		this.bulkActionType.set(type);
-		const titlePrefix = type === "treatment" ? "Trattamento di gruppo" : type === "maintenance" ? "Manutenzione di gruppo" : "Attività di gruppo";
+		const titlePrefix = type === "treatment" ? "Trattamento di gruppo" : type === "maintenance" ? "Manutenzione di gruppo" : type === "harvest" ? "Raccolta di gruppo" : "Attività di gruppo";
 		this.bulkTitle.set(titlePrefix);
 
 		const today = new Date();
@@ -1448,6 +1940,7 @@ export class LandComponent implements OnInit {
 			const typeMap: Record<string, "maintenance" | "harvest" | "irrigation" | "other"> = {
 				treatment: "other",
 				maintenance: "maintenance",
+				harvest: "harvest",
 				other: "other"
 			};
 			const eventType = typeMap[this.bulkActionType() || "other"] || "other";
@@ -1494,7 +1987,8 @@ export class LandComponent implements OnInit {
 				this.plants.set(updatedPlants);
 			}
 
-			this.showToast("Attività di gruppo registrata", "success");
+			const successMessage = this.bulkActionType() === "harvest" ? "Raccolta di gruppo registrata" : "Attività di gruppo registrata";
+			this.showToast(successMessage, "success");
 			this.clearSelection();
 			this.bulkActionType.set(null);
 		} catch (error) {
@@ -1503,7 +1997,37 @@ export class LandComponent implements OnInit {
 		}
 	}
 
+	openDirectStatusModal() {
+		this.isBulkSheetOpen.set(false);
+		this.directStatusValue.set("Ottimo");
+		this.isDirectStatusModalOpen.set(true);
+	}
+
+	async saveDirectStatus() {
+		const selectedIds = Array.from(this.selectedPlantIds());
+		if (selectedIds.length === 0) return;
+
+		const targetStatus = this.directStatusValue();
+		try {
+			await this.plantsService.updatePlants(selectedIds, { status: targetStatus });
+			const updatedPlants = this.plants().map(p => {
+				if (selectedIds.includes(p.id!)) {
+					return { ...p, status: targetStatus };
+				}
+				return p;
+			});
+			this.plants.set(updatedPlants);
+			this.showToast(`Stato aggiornato per ${selectedIds.length} piante`, "success");
+			this.clearSelection();
+			this.isDirectStatusModalOpen.set(false);
+		} catch (error) {
+			console.error(error);
+			this.showToast("Errore durante l'aggiornamento dello stato", "error");
+		}
+	}
+
 	openDeleteConfirm() {
+		this.isBulkSheetOpen.set(false);
 		this.isDeleteConfirmOpen.set(true);
 	}
 
@@ -1532,7 +2056,7 @@ export class LandComponent implements OnInit {
 	}
 
 	onDragStart(event: MouseEvent | TouchEvent, plant: Plant) {
-		if (this.editSubMode() !== 'move') return;
+		if (this.interactionMode() !== 'move') return;
 		event.stopPropagation();
 		this.activeDragPlant = plant;
 		this.hasDragged = false;
@@ -1608,16 +2132,15 @@ export class LandComponent implements OnInit {
 		const plantId = this.activeDragPlant.id;
 		const finalPlant = this.plants().find(p => p.id === plantId);
 
-		if (finalPlant && finalPlant.id) {
-			try {
-				await this.plantsService.updatePlant(finalPlant.id, {
-					position_x: finalPlant.position_x,
-					position_y: finalPlant.position_y
-				});
-				this.showToast("Posizione pianta aggiornata", "success");
-			} catch (error) {
-				console.error(error);
-				this.showToast("Impossibile salvare la posizione", "error");
+		if (finalPlant && finalPlant.id && this.hasDragged) {
+			// Calcola lo snap magnetico al punto del reticolo più vicino
+			const snapped = this.snapToGrid(finalPlant.position_x, finalPlant.position_y);
+
+			// Controlla se il nodo è già occupato da un'altra pianta
+			const isOccupied = this.isNodeOccupied(snapped.x, snapped.y, plantId);
+
+			if (isOccupied) {
+				// Ripristina alla posizione di partenza se lo slot del reticolo è già preso
 				const revertedPlants = this.plants().map(p => {
 					if (p.id === plantId) {
 						return { ...p, position_x: this.initialPlantX, position_y: this.initialPlantY };
@@ -1625,9 +2148,40 @@ export class LandComponent implements OnInit {
 					return p;
 				});
 				this.plants.set(revertedPlants);
+				this.showToast("Punto del reticolo già occupato da un'altra pianta", "info");
+			} else {
+				// Assegna e salva la coordinata esatta del reticolo
+				const updatedPlants = this.plants().map(p => {
+					if (p.id === plantId) {
+						return { ...p, position_x: snapped.x, position_y: snapped.y };
+					}
+					return p;
+				});
+				this.plants.set(updatedPlants);
+
+				try {
+					await this.plantsService.updatePlant(finalPlant.id, {
+						position_x: snapped.x,
+						position_y: snapped.y
+					});
+					this.showToast("Pianta agganciata al reticolo", "success");
+				} catch (error) {
+					console.error(error);
+					this.showToast("Impossibile salvare la posizione", "error");
+					const revertedPlants = this.plants().map(p => {
+						if (p.id === plantId) {
+							return { ...p, position_x: this.initialPlantX, position_y: this.initialPlantY };
+						}
+						return p;
+					});
+					this.plants.set(revertedPlants);
+				}
 			}
 		}
 
 		this.activeDragPlant = null;
+		setTimeout(() => {
+			this.hasDragged = false;
+		}, 100);
 	}
 }

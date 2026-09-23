@@ -117,6 +117,11 @@ export class ArnaldoService {
 	isProcessingAction = signal<boolean>(false);
 	hasNotification = signal<boolean>(false);
 	currentSuggestions = signal<string[]>([]);
+	isFabVisible = signal<boolean>(true);
+
+	setFabVisible(visible: boolean) {
+		this.isFabVisible.set(visible);
+	}
 
 	constructor() {
 		this.supabase = this.supabaseService.client;

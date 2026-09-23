@@ -121,13 +121,22 @@ interface DayCell {
           </h2>
 
           <div class="flex items-center gap-3 flex-wrap justify-end">
-            <div class="bg-camp-sand/20 p-1 rounded-full flex gap-1 border border-camp-sand/30">
+            <div class="bg-camp-sand/20 p-1 rounded-full flex gap-1 border border-camp-sand/30 overflow-x-auto max-w-full">
+              <button 
+                (click)="setView('agenda')"
+                [class.bg-white]="currentView() === 'agenda'"
+                [class.text-camp-earth]="currentView() === 'agenda'"
+                [class.shadow-sm]="currentView() === 'agenda'"
+                class="px-3 sm:px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider text-camp-olive transition-all cursor-pointer"
+              >
+                Agenda
+              </button>
               <button 
                 (click)="setView('month')"
                 [class.bg-white]="currentView() === 'month'"
                 [class.text-camp-earth]="currentView() === 'month'"
                 [class.shadow-sm]="currentView() === 'month'"
-                class="px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider text-camp-olive transition-all"
+                class="px-3 sm:px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider text-camp-olive transition-all cursor-pointer"
               >
                 Mese
               </button>
@@ -136,7 +145,7 @@ interface DayCell {
                 [class.bg-white]="currentView() === 'week'"
                 [class.text-camp-earth]="currentView() === 'week'"
                 [class.shadow-sm]="currentView() === 'week'"
-                class="px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider text-camp-olive transition-all"
+                class="px-3 sm:px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider text-camp-olive transition-all cursor-pointer"
               >
                 Settimana
               </button>
@@ -145,7 +154,7 @@ interface DayCell {
                 [class.bg-white]="currentView() === 'day'"
                 [class.text-camp-earth]="currentView() === 'day'"
                 [class.shadow-sm]="currentView() === 'day'"
-                class="px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider text-camp-olive transition-all"
+                class="px-3 sm:px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider text-camp-olive transition-all cursor-pointer"
               >
                 Giorno
               </button>
@@ -153,7 +162,7 @@ interface DayCell {
 
             <button
               (click)="openCreateModal()"
-              class="px-5 py-2.5 bg-camp-sage text-white text-xs font-bold uppercase tracking-wider rounded-full hover:bg-camp-olive hover:scale-[1.02] active:scale-[0.98] transition-all shadow-md flex items-center gap-2"
+              class="px-5 py-2.5 bg-camp-sage text-white text-xs font-bold uppercase tracking-wider rounded-full hover:bg-camp-olive hover:scale-[1.02] active:scale-[0.98] transition-all shadow-md flex items-center gap-2 cursor-pointer"
             >
               <span>+</span> Attività
             </button>
@@ -166,6 +175,61 @@ interface DayCell {
           </div>
         } @else {
           <!-- views -->
+          @if (currentView() === 'agenda') {
+            <div class="bg-white rounded-2xl border border-camp-sand/40 shadow-sm p-4 sm:p-6 space-y-6">
+              <div class="flex items-center justify-between pb-3 border-b border-camp-sand/30">
+                <h3 class="font-serif font-bold text-base sm:text-lg text-camp-earth">Attività del Mese</h3>
+                <span class="text-xs px-2.5 py-1 bg-camp-sand/30 text-camp-earth rounded-full font-medium">
+                  {{ getEventsForMonth(currentDate()).length }} in programma
+                </span>
+              </div>
+
+              @if (getEventsForMonth(currentDate()).length === 0) {
+                <div class="text-center py-12 text-camp-olive">
+                  <span class="text-4xl block mb-2">📅</span>
+                  <p class="font-serif text-base text-camp-earth">Nessuna attività in questo mese</p>
+                  <p class="text-xs text-camp-olive/80 mt-1">Puoi pianificare un nuovo intervento con il pulsante "+ Attività".</p>
+                </div>
+              } @else {
+                <div class="space-y-3">
+                  @for (event of getEventsForMonth(currentDate()); track (event.id || event.title + event.start)) {
+                    <div
+                      (click)="openEditModal(event)"
+                      [class]="getEventColorClasses(event.type)"
+                      class="p-3.5 sm:p-4 rounded-xl border shadow-sm cursor-pointer hover:brightness-95 transition-all flex items-start justify-between gap-3 group"
+                    >
+                      <div class="flex items-start gap-3 min-w-0 flex-1">
+                        <span class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white/70 flex items-center justify-center text-lg sm:text-xl shrink-0 border border-camp-sand/30 shadow-xs mt-0.5">
+                          {{ getEventIcon(event.type) }}
+                        </span>
+                        <div class="min-w-0 flex-1">
+                          <div class="flex items-center gap-2 flex-wrap">
+                            <h4 class="font-serif font-bold text-sm text-camp-earth truncate">{{ event.title }}</h4>
+                            @if (isPastEvent(event)) {
+                              @switch (getEventCompletionStatus(event)) {
+                                @case ('completata') { <span class="text-[9px] px-2 py-0.5 rounded-full bg-green-100 text-green-800 font-bold">Completata</span> }
+                                @case ('completata_note') { <span class="text-[9px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-bold">Con Note</span> }
+                                @case ('non_completata') { <span class="text-[9px] px-2 py-0.5 rounded-full bg-red-100 text-red-800 font-bold">Non svolta</span> }
+                              }
+                            }
+                          </div>
+                          @if (event.description) {
+                            <p class="text-xs text-camp-olive/80 mt-1 line-clamp-2">{{ event.description }}</p>
+                          }
+                          <div class="flex items-center gap-3 mt-2 text-[10px] font-bold text-camp-olive uppercase tracking-wider flex-wrap">
+                            <span>📅 {{ event.start | date: 'EEEE d MMMM' }}</span>
+                            <span>🕒 {{ getFormattedEventTime(event) }}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <span class="text-camp-olive/50 group-hover:text-camp-sage transition-colors text-base self-center shrink-0">→</span>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+
           @if (currentView() === 'month') {
             <div class="bg-white rounded-2xl border border-camp-sand/40 shadow-sm overflow-hidden flex flex-col">
               <!-- Weekday Headers -->
@@ -189,7 +253,7 @@ interface DayCell {
                     [class.opacity-40]="!cell.isCurrentMonth"
                     [class.bg-camp-sand]="isDragOver(cell.date)"
                     [class.bg-camp-cream]="isToday(cell.date)"
-                    class="min-h-[100px] p-2 flex flex-col gap-1 transition-all group relative border-r border-b border-camp-sand/20"
+                    class="min-h-[100px] p-2 flex flex-col gap-1 transition-colors group relative border-r border-b border-camp-sand/20"
                   >
                     <div class="flex items-center justify-between mb-1">
                       <span 
@@ -210,13 +274,11 @@ interface DayCell {
                     </div>
 
                     <div class="flex-1 space-y-1 overflow-y-auto max-h-[85px] custom-scrollbar">
-                      @for (event of cell.events; track event.id) {
+                      @for (event of cell.events; track (event.id || event.title + event.start)) {
                         <div 
-                          draggable="true"
-                          (dragstart)="onDragStart($event, event)"
                           (click)="$event.stopPropagation(); openEditModal(event)"
                           [class]="getEventColorClasses(event.type)"
-                          class="px-2 py-1 text-[10px] font-medium rounded-lg cursor-grab active:cursor-grabbing border shadow-sm transition-all hover:scale-[1.02] flex items-center justify-between gap-1 overflow-hidden"
+                          class="px-2 py-1 text-[10px] font-medium rounded-lg cursor-pointer border shadow-sm transition-colors duration-150 hover:brightness-95 flex items-center justify-between gap-1 overflow-hidden"
                         >
                           <div class="flex items-center gap-1 min-w-0 flex-1">
                             @if (isPastEvent(event)) {
@@ -250,7 +312,7 @@ interface DayCell {
                     [class.bg-camp-cream]="isToday(day)"
                     [class.border-camp-sage]="isToday(day)"
                     [class.bg-camp-sand]="isDragOver(day)"
-                    class="flex flex-col min-h-[300px] border border-camp-sand/30 rounded-2xl p-4 transition-all"
+                    class="flex flex-col min-h-[300px] border border-camp-sand/30 rounded-2xl p-4 transition-colors"
                   >
                     <div class="text-center pb-3 border-b border-camp-sand/20 mb-3">
                       <p class="text-[10px] font-bold text-camp-olive uppercase tracking-[0.15em] opacity-60">
@@ -262,13 +324,11 @@ interface DayCell {
                     </div>
 
                     <div class="flex-1 space-y-2 overflow-y-auto custom-scrollbar">
-                      @for (event of getEventsForDate(day); track event.id) {
+                      @for (event of getEventsForDate(day); track (event.id || event.title + event.start)) {
                         <div 
-                          draggable="true"
-                          (dragstart)="onDragStart($event, event)"
                           (click)="openEditModal(event)"
                           [class]="getEventColorClasses(event.type)"
-                          class="p-3 text-xs font-medium rounded-xl cursor-grab active:cursor-grabbing border shadow-sm transition-all hover:translate-y-[-1px] space-y-1.5"
+                          class="p-3 text-xs font-medium rounded-xl cursor-pointer border shadow-sm transition-colors duration-150 hover:brightness-95 space-y-1.5"
                         >
                           <div class="flex items-center justify-between">
                             <div class="flex items-center gap-1.5 min-w-0 flex-1">
@@ -826,7 +886,8 @@ interface DayCell {
           <div>
             @if (editingEvent()) {
               <button
-                (click)="onDeleteEvent()"
+                type="button"
+                (click)="openDeleteConfirm()"
                 class="px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-red-500 hover:bg-red-50 rounded-full transition-all border border-red-200 cursor-pointer"
               >
                 Elimina Attività
@@ -852,6 +913,43 @@ interface DayCell {
         </div>
       </app-camp-dialog>
     }
+
+    @if (showDeleteConfirm()) {
+      <app-camp-dialog
+        title="Conferma Eliminazione"
+        subtitle="Operazione Irreversibile"
+        icon="⚠️"
+        maxWidth="max-w-lg"
+        (close)="showDeleteConfirm.set(false)"
+      >
+        <div class="space-y-3">
+          <p class="text-sm text-camp-earth leading-relaxed">
+            Sei sicuro di voler eliminare definitivamente l'attività <strong>"{{ editingEvent()?.title }}"</strong>?
+          </p>
+          <p class="text-xs text-camp-olive/80 leading-relaxed">
+            Questa operazione non può essere annullata e rimuoverà l'intervento dal calendario.
+          </p>
+        </div>
+
+        <div footer class="px-8 py-5 bg-camp-cream/30 border-t border-camp-sand/30 flex justify-end gap-3">
+          <button
+            type="button"
+            (click)="showDeleteConfirm.set(false)"
+            class="px-5 py-2.5 border border-camp-sand/60 rounded-camp text-xs font-bold uppercase tracking-wider text-camp-olive hover:bg-camp-cream/40 transition-colors cursor-pointer"
+          >
+            Annulla
+          </button>
+          <button
+            type="button"
+            (click)="confirmDeleteEvent()"
+            [disabled]="isLoading()"
+            class="px-5 py-2.5 bg-red-600 hover:bg-red-500 text-white rounded-camp text-xs font-bold uppercase tracking-wider transition-colors disabled:opacity-50 cursor-pointer"
+          >
+            Elimina Attività
+          </button>
+        </div>
+      </app-camp-dialog>
+    }
   `,
   styles: []
 })
@@ -874,9 +972,10 @@ export class CalendarComponent implements OnInit {
   isActionLoading = signal(false);
 
   currentDate = signal<Date>(new Date());
-  currentView = signal<'month' | 'week' | 'day'>('month');
+  currentView = signal<'agenda' | 'month' | 'week' | 'day'>(typeof window !== 'undefined' && window.innerWidth < 768 ? 'agenda' : 'month');
 
   showFormModal = signal(false);
+  showDeleteConfirm = signal(false);
   editingEvent = signal<CalendarEvent | null>(null);
 
   formTitle = signal('');
@@ -993,7 +1092,7 @@ export class CalendarComponent implements OnInit {
     const d = this.currentDate();
     const view = this.currentView();
 
-    if (view === 'month') {
+    if (view === 'month' || view === 'agenda') {
       return d.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' }).toUpperCase();
     } else if (view === 'week') {
       const days = this.getWeekDays(d);
@@ -1023,6 +1122,19 @@ export class CalendarComponent implements OnInit {
   weekDays = computed<Date[]>(() => {
     return this.getWeekDays(this.currentDate());
   });
+
+  getEventsForMonth(d: Date): CalendarEvent[] {
+    const year = d.getFullYear();
+    const month = d.getMonth();
+    const activeFarmId = this.selectedFarmId();
+    return this.events()
+      .filter(e => {
+        if (e.farm_id !== activeFarmId) return false;
+        const evDate = new Date(e.start);
+        return evDate.getFullYear() === year && evDate.getMonth() === month;
+      })
+      .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
+  }
 
   async ngOnInit() {
     await this.loadFarms();
@@ -1103,7 +1215,7 @@ export class CalendarComponent implements OnInit {
     this.selectedFarmId.set(val || null);
   }
 
-  setView(view: 'month' | 'week' | 'day') {
+  setView(view: 'agenda' | 'month' | 'week' | 'day') {
     this.currentView.set(view);
   }
 
@@ -1115,7 +1227,7 @@ export class CalendarComponent implements OnInit {
     const d = new Date(this.currentDate());
     const view = this.currentView();
 
-    if (view === 'month') {
+    if (view === 'month' || view === 'agenda') {
       d.setMonth(d.getMonth() + direction);
     } else if (view === 'week') {
       d.setDate(d.getDate() + (direction * 7));
@@ -1220,8 +1332,10 @@ export class CalendarComponent implements OnInit {
 
   getFormattedEventTime(event: CalendarEvent): string {
     if (event.all_day) return 'Tutto il giorno';
+    if (!event.start || !event.end) return '';
     const start = new Date(event.start);
     const end = new Date(event.end);
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) return '';
     const startStr = start.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
     const endStr = end.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
     return `${startStr} - ${endStr}`;
@@ -1295,7 +1409,11 @@ export class CalendarComponent implements OnInit {
 
     cells.forEach(cell => {
       const cellDateStr = cell.date.toDateString();
-      cell.events = evs.filter(e => new Date(e.start).toDateString() === cellDateStr);
+      cell.events = evs.filter(e => {
+        if (!e.start) return false;
+        const d = new Date(e.start);
+        return !isNaN(d.getTime()) && d.toDateString() === cellDateStr;
+      });
     });
     
     return cells;
@@ -1329,10 +1447,12 @@ export class CalendarComponent implements OnInit {
   }
 
   onDragEnterCell(date: Date) {
+    if (!this.draggedEvent()) return;
     this.hoveredCellDateStr.set(date.toDateString());
   }
 
   onDragLeaveCell(date: Date) {
+    if (!this.draggedEvent()) return;
     if (this.hoveredCellDateStr() === date.toDateString()) {
       this.hoveredCellDateStr.set(null);
     }
@@ -1473,6 +1593,7 @@ export class CalendarComponent implements OnInit {
 
   closeFormModal() {
     this.showFormModal.set(false);
+    this.showDeleteConfirm.set(false);
     this.editingEvent.set(null);
     this.openDropdown.set(null);
   }
@@ -1594,7 +1715,11 @@ export class CalendarComponent implements OnInit {
     }
   }
 
-  async onDeleteEvent() {
+  openDeleteConfirm() {
+    this.showDeleteConfirm.set(true);
+  }
+
+  async confirmDeleteEvent() {
     const activeEdit = this.editingEvent();
     if (!activeEdit || !activeEdit.id) return;
 
@@ -1603,6 +1728,7 @@ export class CalendarComponent implements OnInit {
       await this.calendarService.deleteEvent(activeEdit.id);
       await this.loadEvents();
       await this.loadSuggestions();
+      this.showDeleteConfirm.set(false);
       this.closeFormModal();
     } catch (e) {
       console.error('[CalendarComponent] Errore cancellazione attività:', e);

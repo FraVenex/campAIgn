@@ -59,9 +59,30 @@
     border: 3px solid #FDFCF7;
     box-shadow: 0 2px 6px rgba(63, 66, 56, 0.2);
   }
+
+  @media screen and (max-width: 768px) {
+    input:not([type="range"]):not([type="checkbox"]):not([type="radio"]),
+    select,
+    textarea {
+      font-size: 16px !important;
+    }
+  }
 }
 
 @layer utilities {
+  .pb-safe {
+    padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0px));
+  }
+  .pt-safe {
+    padding-top: max(0.5rem, env(safe-area-inset-top, 0px));
+  }
+  .pl-safe {
+    padding-left: max(0.5rem, env(safe-area-inset-left, 0px));
+  }
+  .pr-safe {
+    padding-right: max(0.5rem, env(safe-area-inset-right, 0px));
+  }
+
   .custom-scrollbar::-webkit-scrollbar {
     width: 4px;
   }

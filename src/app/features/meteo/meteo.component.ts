@@ -154,9 +154,9 @@ export type ChartOptions = {
 									subtitle="Tendenza Settimanale"
 									padding="small"
 								>
-									<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 divide-x divide-camp-sand/20 -mx-6 -mb-6">
+									<div class="flex overflow-x-auto divide-x divide-camp-sand/20 -mx-6 -mb-6 pb-2 sm:pb-0 custom-scrollbar lg:grid lg:grid-cols-5">
 										@for (day of forecastDays(); track day.date) {
-											<div class="p-8 flex flex-col items-center text-center hover:bg-camp-beige/30 transition-all group cursor-default">
+											<div class="p-5 sm:p-8 min-w-[160px] sm:min-w-[180px] lg:min-w-0 flex-1 flex flex-col items-center text-center hover:bg-camp-beige/30 transition-all group cursor-default shrink-0">
 												<p class="text-[10px] font-bold text-camp-olive uppercase tracking-[0.2em] mb-1.5 opacity-60">{{ day.date | date: "EEEE" }}</p>
 												<p class="text-[10px] text-camp-olive font-bold mb-8 opacity-30">{{ day.date | date: "d MMMM" }}</p>
 												<span class="text-5xl mb-8 transform group-hover:scale-110 transition-transform duration-300">{{ getWeatherIcon(day.code) }}</span>

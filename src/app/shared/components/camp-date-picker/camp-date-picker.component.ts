@@ -6,12 +6,13 @@ import { CommonModule } from '@angular/common';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div (click)="$event.stopPropagation()" class="bg-white border border-camp-sand rounded-xl shadow-camp-lg p-4 w-72 animate-slide-up">
+    <div (click)="$event.stopPropagation()" class="bg-white border border-camp-sand rounded-xl shadow-camp-lg p-3 sm:p-4 w-72 max-w-[calc(100vw-2rem)] animate-slide-up">
       <div class="flex items-center justify-between mb-4">
         <button
           type="button"
           (click)="navigateMonth(-1)"
-          class="w-8 h-8 rounded-full hover:bg-camp-sand/30 flex items-center justify-center text-camp-olive cursor-pointer"
+          class="w-9 h-9 sm:w-8 sm:h-8 rounded-full hover:bg-camp-sand/30 flex items-center justify-center text-camp-olive cursor-pointer active:scale-95"
+          aria-label="Mese precedente"
         >
           &lt;
         </button>
@@ -21,7 +22,8 @@ import { CommonModule } from '@angular/common';
         <button
           type="button"
           (click)="navigateMonth(1)"
-          class="w-8 h-8 rounded-full hover:bg-camp-sand/30 flex items-center justify-center text-camp-olive cursor-pointer"
+          class="w-9 h-9 sm:w-8 sm:h-8 rounded-full hover:bg-camp-sand/30 flex items-center justify-center text-camp-olive cursor-pointer active:scale-95"
+          aria-label="Mese successivo"
         >
           &gt;
         </button>
@@ -45,7 +47,7 @@ import { CommonModule } from '@angular/common';
             [class.text-white]="selectedDate() === formatDate(cell.date)"
             [class.font-bold]="selectedDate() === formatDate(cell.date)"
             [class.opacity-10]="disablePast() && isPast(cell.date)"
-            class="w-8 h-8 rounded-full hover:bg-camp-sand/30 flex items-center justify-center text-xs transition-colors disabled:pointer-events-none cursor-pointer"
+            class="w-9 h-9 sm:w-8 sm:h-8 rounded-full hover:bg-camp-sand/30 flex items-center justify-center text-xs transition-colors disabled:pointer-events-none cursor-pointer active:scale-95"
           >
             {{ cell.label }}
           </button>

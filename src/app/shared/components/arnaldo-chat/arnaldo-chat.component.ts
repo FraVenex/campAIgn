@@ -13,24 +13,30 @@ import { ArnaldoService, ArnaldoChatMessage, ArnaldoPageContext } from "../../..
 	standalone: true,
 	imports: [CommonModule, FormsModule],
 	template: `
-		<div class="fixed bottom-6 right-6 z-[99] flex flex-col items-end font-sans">
-			@if (isOpen()) {
-				<div class="w-96 max-w-[calc(100vw-3rem)] h-[520px] bg-white rounded-camp-xl shadow-camp-xl border border-camp-sand/40 flex flex-col mb-4 overflow-hidden animate-scale-in">
-					<div class="px-6 py-4 bg-camp-sage text-white flex items-center justify-between shadow-md">
+		@if (isOpen()) {
+			<div class="fixed inset-0 lg:inset-auto lg:bottom-24 lg:right-6 z-[99] flex flex-col items-end font-sans">
+				<div
+					class="fixed inset-0 bg-camp-earth/30 backdrop-blur-xs lg:hidden"
+					(click)="toggleChat()"
+				></div>
+
+				<div class="relative w-full h-[100dvh] lg:w-96 lg:h-[520px] max-w-full lg:max-w-[calc(100vw-3rem)] bg-white rounded-none lg:rounded-camp-xl shadow-camp-xl border-camp-sand/40 lg:border flex flex-col overflow-hidden animate-scale-in z-10 pb-safe">
+					<div class="px-5 py-3.5 sm:px-6 sm:py-4 bg-camp-sage text-white flex items-center justify-between shadow-md pt-safe">
 						<div class="flex items-center gap-3">
-							<div class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-xl relative border border-white/20 shadow-inner">
+							<div class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/10 flex items-center justify-center text-lg sm:text-xl relative border border-white/20 shadow-inner">
 								<span>👨‍🌾</span>
 								<span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-camp-success rounded-full border-2 border-camp-sage"></span>
 							</div>
 							<div>
 								<h3 class="font-serif font-bold text-base leading-tight">Arnaldo</h3>
+								<p class="text-[10px] text-white/70 uppercase tracking-widest leading-none mt-0.5">Assistente Agronomo</p>
 							</div>
 						</div>
 						<div class="flex items-center gap-1">
 							<button
 								(click)="clearChat()"
 								title="Nuova Conversazione"
-								class="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors text-white/80 hover:text-white"
+								class="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors text-white/80 hover:text-white cursor-pointer"
 							>
 								<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -38,7 +44,8 @@ import { ArnaldoService, ArnaldoChatMessage, ArnaldoPageContext } from "../../..
 							</button>
 							<button
 								(click)="toggleChat()"
-								class="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors"
+								class="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors cursor-pointer"
+								title="Chiudi"
 							>
 								<svg
 									xmlns="http://www.w3.org/2000/svg"
@@ -60,7 +67,7 @@ import { ArnaldoService, ArnaldoChatMessage, ArnaldoPageContext } from "../../..
 
 					<div
 						#scrollContainer
-						class="flex-1 overflow-y-auto p-6 space-y-4 bg-camp-beige/20 custom-scrollbar"
+						class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 bg-camp-beige/20 custom-scrollbar"
 					>
 						@if (messages().length === 0) {
 							<div class="text-center py-8 px-4 text-camp-olive/60">
@@ -175,12 +182,12 @@ import { ArnaldoService, ArnaldoChatMessage, ArnaldoPageContext } from "../../..
 								name="chatInput"
 								placeholder="Chiedi ad Arnaldo..."
 								autocomplete="off"
-								class="flex-1 bg-camp-cream/20 border border-camp-sand/50 focus:border-camp-sage rounded-xl px-4 py-2.5 text-xs text-camp-earth focus:outline-none transition-all placeholder-camp-olive/30 shadow-inner"
+								class="flex-1 bg-camp-cream/20 border border-camp-sand/50 focus:border-camp-sage rounded-xl px-4 py-2.5 text-sm sm:text-xs text-camp-earth focus:outline-none transition-all placeholder-camp-olive/30 shadow-inner"
 							/>
 							<button
 								type="submit"
 								[disabled]="!inputText().trim() || isTyping()"
-								class="w-10 h-10 rounded-xl bg-camp-sage hover:bg-camp-earth text-white flex items-center justify-center transition-all shadow-sm active:scale-95 disabled:opacity-40 disabled:pointer-events-none"
+								class="w-10 h-10 rounded-xl bg-camp-sage hover:bg-camp-earth text-white flex items-center justify-center transition-all shadow-sm active:scale-95 disabled:opacity-40 disabled:pointer-events-none cursor-pointer"
 							>
 								<svg
 									xmlns="http://www.w3.org/2000/svg"
@@ -200,16 +207,19 @@ import { ArnaldoService, ArnaldoChatMessage, ArnaldoPageContext } from "../../..
 						</form>
 					</div>
 				</div>
-			}
+			</div>
+		}
 
+		<div class="fixed bottom-20 right-4 lg:bottom-6 lg:right-6 z-[95] font-sans" [class.hidden]="isOpen() || !isFabVisible()">
 			<button
 				(click)="toggleChat()"
-				class="w-16 h-16 rounded-full bg-camp-sage hover:bg-camp-earth text-white flex items-center justify-center shadow-camp-xl hover:scale-105 active:scale-95 transition-all duration-300 relative group"
+				aria-label="Apri chat con Arnaldo"
+				class="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-camp-sage hover:bg-camp-earth text-white flex items-center justify-center shadow-camp-xl hover:scale-105 active:scale-95 transition-all duration-300 relative group cursor-pointer"
 			>
 				@if (!isOpen()) {
 					<span class="absolute inset-0 rounded-full bg-camp-sage/30 animate-ping group-hover:hidden"></span>
 				}
-				<span class="text-3xl transition-transform duration-300 group-hover:rotate-12">👨‍🌾</span>
+				<span class="text-2xl sm:text-3xl transition-transform duration-300 group-hover:rotate-12">👨‍🌾</span>
 				@if (hasNotification() && !isOpen()) {
 					<span class="absolute top-0 right-0 w-4 h-4 bg-camp-accent rounded-full border-2 border-white flex items-center justify-center text-[8px] font-bold text-white">!</span>
 				}
@@ -262,6 +272,7 @@ export class ArnaldoChatComponent {
 	isTyping = this.arnaldoService.isTyping;
 	isProcessingAction = this.arnaldoService.isProcessingAction;
 	hasNotification = this.arnaldoService.hasNotification;
+	isFabVisible = this.arnaldoService.isFabVisible;
 
 	private currentUrl = toSignal(
 		this.router.events.pipe(
