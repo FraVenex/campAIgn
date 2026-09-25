@@ -90,48 +90,57 @@ interface DayCell {
         </div>
       </div>
 
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-camp-sand/40 shadow-sm">
-          <div class="flex items-center gap-2">
-            <button 
-              (click)="navigateDate(-1)"
-              class="w-10 h-10 rounded-full hover:bg-camp-sand/30 flex items-center justify-center text-camp-olive transition-colors"
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-3.5 sm:p-4 rounded-2xl border border-camp-sand/40 shadow-sm">
+          <div class="flex items-center justify-between sm:justify-start gap-2 w-full md:w-auto">
+            <div class="flex items-center gap-1.5">
+              <button 
+                type="button"
+                (click)="navigateDate(-1)"
+                class="w-9 h-9 sm:w-10 sm:h-10 rounded-full hover:bg-camp-sand/30 active:scale-95 flex items-center justify-center text-camp-olive transition-all cursor-pointer"
+                aria-label="Periodo precedente"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <button 
+                type="button"
+                (click)="setToday()"
+                class="px-3 sm:px-4 py-1.5 text-xs font-bold uppercase tracking-wider border border-camp-sand text-camp-olive rounded-full hover:bg-camp-sand/20 active:scale-95 transition-all cursor-pointer"
+              >
+                Oggi
+              </button>
+              <button 
+                type="button"
+                (click)="navigateDate(1)"
+                class="w-9 h-9 sm:w-10 sm:h-10 rounded-full hover:bg-camp-sand/30 active:scale-95 flex items-center justify-center text-camp-olive transition-all cursor-pointer"
+                aria-label="Periodo successivo"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
+
+            <h2 class="text-base sm:text-xl font-serif text-camp-earth tracking-tight font-medium text-center truncate px-2">
+              {{ viewTitle() }}
+            </h2>
+
+            <button
+              type="button"
+              (click)="openCreateModal()"
+              class="md:hidden w-9 h-9 rounded-full bg-camp-sage hover:bg-camp-earth text-white flex items-center justify-center shadow-md active:scale-95 transition-all cursor-pointer shrink-0"
+              aria-label="Nuova attività"
+              title="Aggiungi attività"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            <button 
-              (click)="setToday()"
-              class="px-4 py-2 text-xs font-bold uppercase tracking-wider border border-camp-sand text-camp-olive rounded-full hover:bg-camp-sand/20 transition-all"
-            >
-              Oggi
-            </button>
-            <button 
-              (click)="navigateDate(1)"
-              class="w-10 h-10 rounded-full hover:bg-camp-sand/30 flex items-center justify-center text-camp-olive transition-colors"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-              </svg>
+              <span class="text-lg font-bold leading-none">+</span>
             </button>
           </div>
 
-          <h2 class="text-xl font-serif text-camp-earth tracking-tight font-medium text-center">
-            {{ viewTitle() }}
-          </h2>
-
-          <div class="flex items-center gap-3 flex-wrap justify-end">
+          <div class="flex items-center gap-2 sm:gap-3 justify-between md:justify-end w-full md:w-auto">
             <div class="bg-camp-sand/20 p-1 rounded-full flex gap-1 border border-camp-sand/30 overflow-x-auto max-w-full">
               <button 
-                (click)="setView('agenda')"
-                [class.bg-white]="currentView() === 'agenda'"
-                [class.text-camp-earth]="currentView() === 'agenda'"
-                [class.shadow-sm]="currentView() === 'agenda'"
-                class="px-3 sm:px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider text-camp-olive transition-all cursor-pointer"
-              >
-                Agenda
-              </button>
-              <button 
+                type="button"
                 (click)="setView('month')"
                 [class.bg-white]="currentView() === 'month'"
                 [class.text-camp-earth]="currentView() === 'month'"
@@ -141,28 +150,41 @@ interface DayCell {
                 Mese
               </button>
               <button 
+                type="button"
+                (click)="setView('agenda')"
+                [class.bg-white]="currentView() === 'agenda'"
+                [class.text-camp-earth]="currentView() === 'agenda'"
+                [class.shadow-sm]="currentView() === 'agenda'"
+                class="px-3 sm:px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider text-camp-olive transition-all cursor-pointer"
+              >
+                Agenda
+              </button>
+              <button 
+                type="button"
                 (click)="setView('week')"
                 [class.bg-white]="currentView() === 'week'"
                 [class.text-camp-earth]="currentView() === 'week'"
                 [class.shadow-sm]="currentView() === 'week'"
-                class="px-3 sm:px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider text-camp-olive transition-all cursor-pointer"
+                class="px-3 sm:px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider text-camp-olive transition-all cursor-pointer hidden sm:block"
               >
                 Settimana
               </button>
               <button 
+                type="button"
                 (click)="setView('day')"
                 [class.bg-white]="currentView() === 'day'"
                 [class.text-camp-earth]="currentView() === 'day'"
                 [class.shadow-sm]="currentView() === 'day'"
-                class="px-3 sm:px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider text-camp-olive transition-all cursor-pointer"
+                class="px-3 sm:px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider text-camp-olive transition-all cursor-pointer hidden sm:block"
               >
                 Giorno
               </button>
             </div>
 
             <button
+              type="button"
               (click)="openCreateModal()"
-              class="px-5 py-2.5 bg-camp-sage text-white text-xs font-bold uppercase tracking-wider rounded-full hover:bg-camp-olive hover:scale-[1.02] active:scale-[0.98] transition-all shadow-md flex items-center gap-2 cursor-pointer"
+              class="hidden md:flex px-5 py-2.5 bg-camp-sage hover:bg-camp-earth text-white text-xs font-bold uppercase tracking-wider rounded-full hover:scale-[1.02] active:scale-[0.98] transition-all shadow-md items-center gap-2 cursor-pointer"
             >
               <span>+</span> Attività
             </button>
@@ -196,7 +218,7 @@ interface DayCell {
                     <div
                       (click)="openEditModal(event)"
                       [class]="getEventColorClasses(event.type)"
-                      class="p-3.5 sm:p-4 rounded-xl border shadow-sm cursor-pointer hover:brightness-95 transition-all flex items-start justify-between gap-3 group"
+                      class="p-3.5 sm:p-4 rounded-xl border shadow-xs cursor-pointer hover:brightness-95 active:scale-[0.99] transition-all flex items-start justify-between gap-3 group"
                     >
                       <div class="flex items-start gap-3 min-w-0 flex-1">
                         <span class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white/70 flex items-center justify-center text-lg sm:text-xl shrink-0 border border-camp-sand/30 shadow-xs mt-0.5">
@@ -231,7 +253,8 @@ interface DayCell {
           }
 
           @if (currentView() === 'month') {
-            <div class="bg-white rounded-2xl border border-camp-sand/40 shadow-sm overflow-hidden flex flex-col">
+            <!-- Desktop Grid View (md+) -->
+            <div class="hidden md:flex bg-white rounded-2xl border border-camp-sand/40 shadow-sm overflow-hidden flex-col">
               <!-- Weekday Headers -->
               <div class="grid grid-cols-7 border-b border-camp-sand/30 bg-camp-cream/20 divide-x divide-camp-sand/20">
                 @for (day of weekdayLabels; track day) {
@@ -294,6 +317,125 @@ interface DayCell {
                         </div>
                       }
                     </div>
+                  </div>
+                }
+              </div>
+            </div>
+
+            <!-- Mobile Touch-First Mini-Month + Day Agenda View (md:hidden) -->
+            <div class="md:hidden bg-white rounded-2xl border border-camp-sand/40 shadow-sm overflow-hidden p-3.5 space-y-4">
+              <!-- Weekday Headers -->
+              <div class="grid grid-cols-7 text-center pb-2 border-b border-camp-sand/30">
+                @for (day of weekdayLabels; track day) {
+                  <span class="text-[10px] font-bold uppercase tracking-wider text-camp-olive/70">
+                    {{ day }}
+                  </span>
+                }
+              </div>
+
+              <!-- Days Grid (Touch-friendly circles) -->
+              <div class="grid grid-cols-7 gap-y-2.5 gap-x-1 text-center">
+                @for (cell of monthDays(); track $index) {
+                  <button
+                    type="button"
+                    (click)="selectMobileDate(cell.date)"
+                    [class.opacity-30]="!cell.isCurrentMonth"
+                    class="flex flex-col items-center justify-center py-1 rounded-xl transition-all relative cursor-pointer group select-none"
+                  >
+                    <!-- Day circle badge -->
+                    <div
+                      [class]="
+                        isSelectedMobileDate(cell.date)
+                          ? 'w-9 h-9 rounded-full bg-camp-sage text-white font-bold shadow-md flex items-center justify-center text-xs scale-105'
+                          : isToday(cell.date)
+                            ? 'w-9 h-9 rounded-full ring-2 ring-camp-sage text-camp-sage font-bold flex items-center justify-center text-xs bg-camp-cream/40'
+                            : 'w-9 h-9 rounded-full hover:bg-camp-sand/40 text-camp-earth flex items-center justify-center text-xs'
+                      "
+                    >
+                      {{ cell.label }}
+                    </div>
+
+                    <!-- Event dots (up to 3 colored indicators) -->
+                    <div class="h-1.5 flex items-center justify-center gap-0.5 mt-0.5">
+                      @for (ev of cell.events.slice(0, 3); track ev.id) {
+                        <span
+                          [class]="
+                            ev.type === 'maintenance'
+                              ? 'bg-camp-terracotta'
+                              : ev.type === 'harvest'
+                                ? 'bg-amber-500'
+                                : ev.type === 'irrigation'
+                                  ? 'bg-blue-500'
+                                  : 'bg-camp-sage'
+                          "
+                          class="w-1.5 h-1.5 rounded-full shrink-0"
+                        ></span>
+                      }
+                    </div>
+                  </button>
+                }
+              </div>
+
+              <!-- Selected Day Activities Panel -->
+              <div class="pt-3 border-t border-camp-sand/40 space-y-3">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-camp-olive/60 block">Giorno Selezionato</span>
+                    <h4 class="font-serif font-bold text-sm text-camp-earth">
+                      {{ formatSelectedMobileDate(selectedMobileDate()) }}
+                    </h4>
+                  </div>
+                  <button
+                    type="button"
+                    (click)="openCreateModalAtDate(selectedMobileDate())"
+                    class="px-3.5 py-1.5 bg-camp-cream hover:bg-camp-sand/50 text-camp-earth text-[11px] font-bold uppercase tracking-wider rounded-full border border-camp-sand/60 transition-all flex items-center gap-1 cursor-pointer active:scale-95 shadow-2xs"
+                  >
+                    <span>+</span> Aggiungi
+                  </button>
+                </div>
+
+                <!-- Event list for the selected day -->
+                @if (getEventsForDate(selectedMobileDate()).length === 0) {
+                  <div class="py-6 px-4 text-center bg-camp-cream/20 rounded-xl border border-camp-sand/30">
+                    <span class="text-2xl block mb-1">🌿</span>
+                    <p class="text-xs font-serif text-camp-earth font-medium">Nessuna attività programmata</p>
+                    <p class="text-[11px] text-camp-olive/70 mt-0.5">Nessun intervento pianificato per questa data.</p>
+                  </div>
+                } @else {
+                  <div class="space-y-2">
+                    @for (event of getEventsForDate(selectedMobileDate()); track event.id) {
+                      <div
+                        (click)="openEditModal(event)"
+                        [class]="getEventColorClasses(event.type)"
+                        class="p-3.5 rounded-xl border shadow-xs cursor-pointer active:scale-[0.99] transition-all flex items-start justify-between gap-3 group"
+                      >
+                        <div class="flex items-start gap-3 min-w-0 flex-1">
+                          <span class="w-9 h-9 rounded-lg bg-white/85 flex items-center justify-center text-lg shrink-0 border border-camp-sand/30 shadow-2xs mt-0.5">
+                            {{ getEventIcon(event.type) }}
+                          </span>
+                          <div class="min-w-0 flex-1">
+                            <div class="flex items-center gap-1.5 flex-wrap">
+                              <h5 class="font-serif font-bold text-sm text-camp-earth truncate">{{ event.title }}</h5>
+                              @if (isPastEvent(event)) {
+                                @switch (getEventCompletionStatus(event)) {
+                                  @case ('completata') { <span class="text-[9px] px-2 py-0.5 rounded-full bg-green-100 text-green-800 font-bold">Completata</span> }
+                                  @case ('completata_note') { <span class="text-[9px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-bold">Con Note</span> }
+                                  @case ('non_completata') { <span class="text-[9px] px-2 py-0.5 rounded-full bg-red-100 text-red-800 font-bold">Non svolta</span> }
+                                }
+                              }
+                            </div>
+                            @if (event.description) {
+                              <p class="text-xs text-camp-olive/80 mt-0.5 line-clamp-2 leading-relaxed">{{ event.description }}</p>
+                            }
+                            <div class="text-[10px] font-bold text-camp-olive/70 uppercase tracking-wider mt-1.5 flex items-center gap-1">
+                              <span>🕒</span>
+                              <span>{{ getFormattedEventTime(event) }}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <span class="text-camp-olive/40 text-sm self-center">→</span>
+                      </div>
+                    }
                   </div>
                 }
               </div>
@@ -489,8 +631,8 @@ interface DayCell {
             <div class="bg-white rounded-2xl border border-camp-sand/40 shadow-sm overflow-hidden">
               <div class="px-6 py-4 border-b border-camp-sand/20 flex items-center justify-between">
                 <div class="flex items-center gap-3">
-                  <div class="w-8 h-8 rounded-full bg-camp-sage/10 flex items-center justify-center text-camp-sage border border-camp-sage/20">
-                    <span class="text-sm">👨‍🌾</span>
+                  <div class="w-9 h-9 rounded-full overflow-hidden shrink-0 ring-1 ring-camp-sage/30 shadow-xs bg-camp-sand/30">
+                    <img src="assets/Arnaldo.jpg" alt="Arnaldo" class="w-full h-full object-cover" />
                   </div>
                   <div>
                     <p class="text-[10px] uppercase font-bold tracking-widest text-camp-olive/60">Arnaldo suggerisce</p>
@@ -972,7 +1114,8 @@ export class CalendarComponent implements OnInit {
   isActionLoading = signal(false);
 
   currentDate = signal<Date>(new Date());
-  currentView = signal<'agenda' | 'month' | 'week' | 'day'>(typeof window !== 'undefined' && window.innerWidth < 768 ? 'agenda' : 'month');
+  currentView = signal<'agenda' | 'month' | 'week' | 'day'>(typeof window !== 'undefined' && window.innerWidth < 768 ? 'month' : 'month');
+  selectedMobileDate = signal<Date>(new Date());
 
   showFormModal = signal(false);
   showDeleteConfirm = signal(false);
@@ -1220,7 +1363,9 @@ export class CalendarComponent implements OnInit {
   }
 
   setToday() {
-    this.currentDate.set(new Date());
+    const now = new Date();
+    this.currentDate.set(now);
+    this.selectedMobileDate.set(now);
   }
 
   navigateDate(direction: number) {
@@ -1235,6 +1380,62 @@ export class CalendarComponent implements OnInit {
       d.setDate(d.getDate() + direction);
     }
     this.currentDate.set(d);
+
+    const today = new Date();
+    if (d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear()) {
+      this.selectedMobileDate.set(today);
+    } else {
+      this.selectedMobileDate.set(new Date(d.getFullYear(), d.getMonth(), 1));
+    }
+  }
+
+  selectMobileDate(d: Date) {
+    this.selectedMobileDate.set(new Date(d));
+    if (d.getMonth() !== this.currentDate().getMonth() || d.getFullYear() !== this.currentDate().getFullYear()) {
+      this.currentDate.set(new Date(d));
+    }
+  }
+
+  isSelectedMobileDate(d: Date): boolean {
+    const sel = this.selectedMobileDate();
+    return d.getDate() === sel.getDate() &&
+      d.getMonth() === sel.getMonth() &&
+      d.getFullYear() === sel.getFullYear();
+  }
+
+  formatSelectedMobileDate(d: Date): string {
+    const today = new Date();
+    const isToday = d.getDate() === today.getDate() &&
+      d.getMonth() === today.getMonth() &&
+      d.getFullYear() === today.getFullYear();
+    const formatted = d.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' });
+    return isToday ? `Oggi, ${formatted}` : formatted.charAt(0).toUpperCase() + formatted.slice(1);
+  }
+
+  openCreateModalAtDate(targetDate: Date) {
+    this.editingEvent.set(null);
+    this.openDropdown.set(null);
+    this.isEditingPastEvent.set(false);
+    
+    const yearStr = targetDate.getFullYear();
+    const monthStr = String(targetDate.getMonth() + 1).padStart(2, '0');
+    const dayStr = String(targetDate.getDate()).padStart(2, '0');
+    const dateStr = `${yearStr}-${monthStr}-${dayStr}`;
+
+    this.formTitle.set('');
+    this.formDescription.set('');
+    this.formType.set('maintenance');
+    
+    const activeFarmId = this.selectedFarmId() || (this.farms().length > 0 ? this.farms()[0].id || '' : '');
+    this.formFarmId.set(activeFarmId);
+    
+    this.formAllDay.set(false);
+    this.formStartDate.set(dateStr);
+    this.formStartTime.set('09:00');
+    this.formEndDate.set(dateStr);
+    this.formEndTime.set('10:00');
+    
+    this.showFormModal.set(true);
   }
 
   isToday(date: Date): boolean {

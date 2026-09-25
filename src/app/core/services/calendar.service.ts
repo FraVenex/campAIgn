@@ -316,16 +316,17 @@ export class CalendarService {
       const { data, error } = await this.supabase
         .from('event_plants')
         .select('event_id, events(*)')
-        .eq('plant_id', plantId)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .eq('plant_id', plantId);
 
-      if (error || !data) return null;
+      if (error || !data || data.length === 0) return null;
 
-      const raw = (data as any).events;
-      if (!raw) return null;
-      return { ...raw, plant_ids: [plantId] } as CalendarEvent;
+      const events = (data as any[])
+        .map(row => row.events)
+        .filter(ev => !!ev && !!ev.start)
+        .sort((a, b) => new Date(b.start).getTime() - new Date(a.start).getTime());
+
+      if (events.length === 0) return null;
+      return { ...events[0], plant_ids: [plantId] } as CalendarEvent;
     } catch {
       return null;
     }

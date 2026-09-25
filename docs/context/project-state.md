@@ -1,10 +1,12 @@
 # Stato del Progetto
 
-## Data Ultimo Aggiornamento: 2026-09-23
+## Data Ultimo Aggiornamento: 2026-09-25
 
 ## Stato Attuale
+- **Arnaldo AI Assistant**: Riprogettazione completa UI/UX e personalizzazione della voce: ora risponde con l'anima di **nonno Arnaldo**, un uomo saggio che ha lavorato tutta la vita con le mani nella terra, parla con gli ulivi e vuole tramandare la sua eredità rurale con calore e schiettezza, senza mai essere sdolcinato. Dialog modale moderno per mobile, avatar illustrato 512x512 ad alta risoluzione (`assets/Arnaldo.jpg`), temperatura aumentata a 0.4 per risposte più fluide e naturali e suggerimenti rapidi contestuali.
+- **Calendario Mobile (UX Apple Calendar)**: Riprogettazione radicale dell'esperienza mobile del Calendario. Eliminata la griglia mensile compressa illeggibile; introdotto il pattern Mini-Mese touch-friendly (giorni circolari ergonomici, dot indicatori di eventi) abbinato all'Agenda del giorno selezionato subito sotto con card dettagliate e pulsante rapido `+ Aggiungi`.
 - **Design System**: Refactor completo. Rimozione DaisyUI, palette camp/ estesa con tokens semantici (ombre, radius, animazioni). Classi utility camp-* (input, btn, card, alert, glass).
-- **Responsive Mobile & Ergonomia**: Ottimizzazione completa per smartphone (Portrait e Landscape) e tablet. Safe areas (`env(safe-area-inset)`), Bottom Navigation Bar fissa per thumb zone, disattivazione auto-zoom iOS Safari su input (<16px), touch target minimi (36-44px), modali trasformati in Bottom Sheet scorrevoli su mobile.
+- **Responsive Mobile & Ergonomia**: Ottimizzazione completa per smartphone (Portrait e Landscape) e tablet. Safe areas (`env(safe-area-inset)`), Bottom Navigation Bar fissa per thumb zone, disattivazione auto-zoom iOS Safari su input (<16px), touch target minimi (36-44px), modali e dialoghi standardizzati al centro dello schermo con margini d'aria e backdrop.
 - **Auth Flow**: Redesign completo Login/Register con glassmorphism, accessibilità (label+id, autocomplete, aria-label), redirect intelligente post-login basato su onboarding_completed.
 - **Routing / State Machine**: Guard system riscritto — guestGuard (login/register), onboardingGuard, appGuard. Naming coerente, logica centralizzata senza ambiguità.
 - **Onboarding**: Finalizzato con Step 3 per disposizione (Regolare/Irregolare), inserimento manuale piante e persistenza sulla tabella `farms`.
@@ -15,12 +17,13 @@
 - [x] Responsive Design Multi-Device (Mobile Portrait, Mobile Landscape, Tablet, Desktop)
   - Bottom Navigation Bar mobile con navigazione rapida (Home, Terreno, Meteo, Agenda, Archivio)
   - Supporto Notch / Home bar con `viewport-fit=cover` e classi `.pt-safe`, `.pb-safe`
+  - Vista Calendario Mobile ergonomica: Mini-Mese circolare + Agenda giorno selezionato (stile Apple Calendar / Fantastical)
   - Vista Agenda nel Calendario per smartphone con card informative e filtri vista
   - Bottom Sheet reattivo per la pianta selezionata nella Mappa del Terreno
   - Card view verticale per l'Archivio Attività su schermi piccoli (in sostituzione di tabelle orizzontali)
-  - Modali con comportamento Bottom Sheet su portrait e scroll compatto in landscape
+  - Modali e dialoghi centrati normalmente a schermo (`CampDialogComponent`) sia su mobile che su desktop
   - Strip orizzontale scorrevole per le previsioni meteo 5 giorni
-  - Arnaldo Assistant mobile-first (full screen drawer con gestione tastiera)
+  - Arnaldo Assistant mobile dialog moderno e raffinato con avatar fotografico reale (`assets/Arnaldo.jpg`)
 - [x] Auth: Login e Register con design premium e UX coerente
 - [x] Guard system robusto a 3 livelli (guest, onboarding, app)
 - [x] Onboarding multi-step con card selection, geolocalizzazione, range slider

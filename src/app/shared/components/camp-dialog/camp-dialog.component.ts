@@ -1,4 +1,4 @@
-import { Component, input, output } from '@angular/core';
+import { Component, input, output, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -6,13 +6,17 @@ import { CommonModule } from '@angular/common';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 md:p-8">
+    <div
+      class="fixed inset-0 z-[100] flex items-center justify-center p-3.5 sm:p-6 md:p-8"
+      role="dialog"
+      aria-modal="true"
+    >
       <div 
-        class="absolute inset-0 bg-camp-earth/40 backdrop-blur-sm transition-opacity duration-300"
+        class="absolute inset-0 bg-camp-earth/50 backdrop-blur-xs transition-opacity duration-300"
         (click)="close.emit()"
       ></div>
 
-      <div [class]="'relative w-full ' + maxWidth() + ' max-h-[92dvh] landscape:max-h-[96dvh] bg-white rounded-t-2xl sm:rounded-camp-xl shadow-2xl overflow-hidden flex flex-col animate-scale-in border border-camp-sand/30 pb-safe sm:pb-0'">
+      <div [class]="'relative w-full ' + maxWidth() + ' max-h-[88dvh] landscape:max-h-[92dvh] bg-white rounded-2xl sm:rounded-camp-xl shadow-2xl overflow-hidden flex flex-col animate-scale-in border border-white/80 sm:border-camp-sand/40'">
         <div class="px-4 py-3.5 sm:px-6 md:px-8 sm:py-6 border-b border-camp-sand/30 flex items-center justify-between bg-camp-cream/30 shrink-0">
           <div class="flex items-center gap-3 sm:gap-4">
             @if (icon()) {
@@ -29,6 +33,7 @@ import { CommonModule } from '@angular/common';
           </div>
           
           <button
+            type="button"
             (click)="close.emit()"
             class="w-10 h-10 sm:w-12 sm:h-12 rounded-full hover:bg-camp-sand/40 flex items-center justify-center transition-all group cursor-pointer"
             aria-label="Chiudi dialogo"
@@ -55,10 +60,10 @@ import { CommonModule } from '@angular/common';
   `,
   styles: [`
     .animate-scale-in {
-      animation: scaleIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      animation: scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     }
     @keyframes scaleIn {
-      from { opacity: 0; transform: scale(0.95) translateY(20px); }
+      from { opacity: 0; transform: scale(0.96) translateY(8px); }
       to { opacity: 1; transform: scale(1) translateY(0); }
     }
     .custom-scrollbar::-webkit-scrollbar {
@@ -82,4 +87,10 @@ export class CampDialogComponent {
   icon = input<string>();
   maxWidth = input<string>('max-w-5xl');
   close = output<void>();
+
+  @HostListener('window:keydown.escape')
+  handleEscape() {
+    this.close.emit();
+  }
 }
+

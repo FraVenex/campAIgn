@@ -11,14 +11,7 @@ import { PlantsService, Plant } from "./plants.service";
 import { CalendarService, CalendarEvent } from "./calendar.service";
 import { WeatherService, WeatherData } from "./weather.service";
 
-export type ArnaldoPageContext =
-	| "dashboard"
-	| "meteo"
-	| "calendar"
-	| "archive"
-	| "land"
-	| "plant-detail"
-	| "general";
+export type ArnaldoPageContext = "dashboard" | "meteo" | "calendar" | "archive" | "land" | "plant-detail" | "general";
 
 export interface ArnaldoSuggestion {
 	id?: string;
@@ -139,16 +132,14 @@ export class ArnaldoService {
 					timestamp: new Date(m.timestamp)
 				}));
 			}
-		} catch {
-		}
+		} catch {}
 		return [];
 	}
 
 	private saveMessagesToStorage(msgs: ArnaldoChatMessage[]): void {
 		try {
 			localStorage.setItem("campaign_arnaldo_chat_messages", JSON.stringify(msgs));
-		} catch {
-		}
+		} catch {}
 	}
 
 	private loadIsOpenFromStorage(): boolean {
@@ -163,8 +154,7 @@ export class ArnaldoService {
 	private saveIsOpenToStorage(isOpen: boolean): void {
 		try {
 			localStorage.setItem("campaign_arnaldo_chat_is_open", String(isOpen));
-		} catch {
-		}
+		} catch {}
 	}
 
 	toggleChat(): void {
@@ -181,8 +171,7 @@ export class ArnaldoService {
 		this.currentSuggestions.set([]);
 		try {
 			localStorage.removeItem("campaign_arnaldo_chat_messages");
-		} catch {
-		}
+		} catch {}
 	}
 
 	async sendUserQuery(userQuery: string, pageContext: ArnaldoPageContext): Promise<void> {
@@ -279,7 +268,7 @@ export class ArnaldoService {
 			const confirmMsg: ArnaldoChatMessage = {
 				id: "arnaldo_ack_" + Date.now(),
 				sender: "arnaldo",
-				text: `Perfetto! L'attività "${msg.suggestion.title}" è stata accettata ed inserita nel tuo calendario.`,
+				text: `Ben fatto! Ho segnato "${msg.suggestion.title}" sul calendario. Vedrai che la terra ti ringrazierà.`,
 				timestamp: new Date()
 			};
 
@@ -315,7 +304,7 @@ export class ArnaldoService {
 			const rejectMsg: ArnaldoChatMessage = {
 				id: "arnaldo_rej_" + Date.now(),
 				sender: "arnaldo",
-				text: `Ho registrato il tuo rifiuto per l'attività "${msg.suggestion.title}".`,
+				text: `D'accordo, lasciamo stare "${msg.suggestion.title}" per ora. Nessun problema, ci torniamo su quando lo ritieni opportuno.`,
 				timestamp: new Date()
 			};
 
@@ -328,10 +317,7 @@ export class ArnaldoService {
 		}
 	}
 
-	async buildGroundingContext(
-		pageContext: ArnaldoPageContext,
-		currentPlantId?: string
-	): Promise<ArnaldoGroundingContext> {
+	async buildGroundingContext(pageContext: ArnaldoPageContext, currentPlantId?: string): Promise<ArnaldoGroundingContext> {
 		let farm: Farm | null = null;
 		let plants: Plant[] = [];
 		let selectedPlant: Plant | null = null;
@@ -384,9 +370,7 @@ export class ArnaldoService {
 
 		if (farm && farm.latitude !== null && farm.longitude !== null) {
 			try {
-				weatherData = await firstValueFrom(
-					this.weatherService.getWeather(farm.latitude, farm.longitude)
-				);
+				weatherData = await firstValueFrom(this.weatherService.getWeather(farm.latitude, farm.longitude));
 			} catch {
 				weatherData = null;
 			}
@@ -471,11 +455,7 @@ export class ArnaldoService {
 		};
 	}
 
-	async sendMessage(
-		history: ArnaldoChatMessage[],
-		userQuery: string,
-		pageContext: ArnaldoPageContext
-	): Promise<ArnaldoResponse> {
+	async sendMessage(history: ArnaldoChatMessage[], userQuery: string, pageContext: ArnaldoPageContext): Promise<ArnaldoResponse> {
 		const groundingContext = await this.buildGroundingContext(pageContext);
 
 		const formattedMessages = history
@@ -500,21 +480,16 @@ export class ArnaldoService {
 				return {
 					replyText: data.replyText,
 					suggestions: Array.isArray(data.suggestions) ? data.suggestions : [],
-					suggestedQuestions: Array.isArray(data.suggestedQuestions)
-						? data.suggestedQuestions
-						: []
+					suggestedQuestions: Array.isArray(data.suggestedQuestions) ? data.suggestedQuestions : []
 				};
 			}
-		} catch {
-		}
+		} catch {}
 
 		const apiKey = (environment as any).geminiApiKey;
 		const model = (environment as any).geminiModel || "gemini-2.0-flash";
 
 		if (!apiKey || apiKey.includes("your_gemini_api_key")) {
-			throw new Error(
-				"La chiave API Gemini non è stata ancora configurata. Inserisci la tua API Key nel file environment.ts o nei secret Supabase."
-			);
+			throw new Error("La chiave API Gemini non è stata ancora configurata. Inserisci la tua API Key nel file environment.ts o nei secret Supabase.");
 		}
 
 		return await this.callGeminiDirect(apiKey, model, pageContext, formattedMessages, groundingContext);
@@ -534,26 +509,28 @@ Operi come un GEM personalizzato di Gemini dotato di memoria continua ed evoluti
 - Impara dalle conversazioni: fai tesoro delle preferenze dell'utente, delle sue abitudini di lavoro e dei dettagli specifici sulle sue piante e terreni per anticipare le sue necessità e suggerire proattivamente azioni coerenti con la pagina attiva.
 - Se prima l'utente ti ha parlato di una pianta specifica, di un trattamento o di un dubbio e poi naviga in un'altra pagina (es. Calendario, Meteo, Terreno), ricorda quel contesto e offri consigli pertinenti e predittivi.
 
-Nome ed Identità:
-- Ti chiami Arnaldo, figura del nonno dell'utente: saggio, pratico, con esperienza maturata sul campo.
-- Tono umano, calmo, premuroso, concreto, diretto ed affidabile.
-- Nessuna freddezza, risposta preconfezionata o teatralità artificiale.
+Chi sei veramente (La tua anima e personalità):
+- Ti chiami Arnaldo: il nonno dell'utente, un uomo saggio che ha lavorato la terra per tutta la vita con fatica, onestà e profonda passione.
+- Tratti l'utente come un nipote a cui vuoi bene e di cui ti fidi per portare avanti la tua eredità: il tuo più grande desiderio è che impari ad amare, capire e custodire questo terreno affinché gli ulivi e le piante continuino a vivere e dare frutti sani per le generazioni future.
+- Ami la terra al punto da parlare con le piante: per te gli ulivi non sono numeri o oggetti, ma creature vive che respirano, hanno sete, sentono il freddo o il vento e comunicano con chi sa osservarle con rispetto.
+- NON SEI MAI SDOLCINATO, MELENSO O TEATRALE: sei un contadino autentico, schietto e concreto. Il tuo affetto non si esprime con smancerie o moine, ma con consigli sinceri, pratici, incoraggiamenti calorosi e la premura di chi vuole insegnare il mestiere senza arroganza ("Bravo, hai fatto bene a controllare", "Ascolta il nonno: rimbocchiamoci le maniche", "La terra non aspetta, ma ha i suoi tempi").
+- Niente risposte fredde da manuale o distaccate: usa un linguaggio vivo, amichevole, caloroso e naturale in italiano, unendo l'affetto familiare a una solida competenza agronomica pratica.
 
 Ruolo e responsabilità:
 - Conosci sempre la pagina corrente (pageContext: ${pageContext}) e usi il contesto reale ed esaustivo fornito in groundingContext.
 - Non dire MAI che non hai i dettagli di un'attività o che non puoi accedere al singolo intervento: hai già TUTTI i dati storici a disposizione in groundingContext.pastEvents e la memoria dei messaggi precedenti.
-- Rispondi DIRETTAMENTE alla domanda o richiesta dell'utente senza convenevoli, premesse inutili o saluti ripetitivi.
-- Suggerisci, non imponi. Aiuti a pianificare senza mai prendere decisioni irreversibili al posto dell’utente.
+- Rispondi con la voce calda e concreta di un nonno esperto, andando dritto al punto operativo senza preamboli noiosi.
+- Suggerisci, consigli e guidi con cura; non imporre mai decisioni irreversibili al posto dell'utente.
 
 Modo di rispondere e regole d'oro:
-1. Chiaro, concreto e orientato all'azione. Rispondi subito alla domanda dell'utente senza fronzoli.
-2. Rispondi SEMPRE ed ESCLUSIVAMENTE in lingua italiana e in formato Markdown pulito per la chat (usa **grassetto** per evidenziare termini chiave).
-3. Se un consiglio non è sicuro o se i dati non bastano, dillo chiaramente e sii prudente. Non inventare mai diagnosi, fatti o dati mancanti.
+1. Chiaro, concreto, caldo e orientato all'azione. Dai subito consigli pratici con schiettezza affettuosa.
+2. Rispondi SEMPRE ed ESCLUSIVAMENTE in lingua italiana e in formato Markdown pulito per la chat (usa **grassetto** per evidenziare termini chiave o attrezzi/cure).
+3. Se un consiglio non è sicuro o se i dati non bastano, dillo chiaramente e consiglia prudenza con la saggezza di chi rispetta la natura. Non inventare mai dati.
 4. Se proponi una manutenzione o attività, inseriscila nell'array "suggestions" come proposta confermabile, spiegando brevemente il motivo.
 5. Non creare MAI eventi definitivi o confermati nel calendario senza approvazione dell'utente.
 6. Restituisci la risposta ESCLUSIVAMENTE come oggetto JSON valido con la seguente struttura:
 {
-  "replyText": "risposta diretta e sintetica in markdown senza saluti preimpostati",
+  "replyText": "risposta amichevole e concreta di nonno Arnaldo in markdown",
   "suggestions": [
     {
       "title": "Titolo dell'attività",
@@ -562,7 +539,7 @@ Modo di rispondere e regole d'oro:
       "start": "ISO_DATE_STRING",
       "end": "ISO_DATE_STRING",
       "all_day": boolean,
-      "suggestion_reason": "Motivazione basata sui dati reali e conversazione",
+      "suggestion_reason": "Motivazione basata sui dati reali e saggezza del nonno",
       "status": "pending"
     }
   ],
@@ -599,7 +576,7 @@ ${JSON.stringify(groundingContext, null, 2)}`;
 					systemInstruction: { parts: [{ text: systemInstruction }] },
 					contents,
 					generationConfig: {
-						temperature: 0.2,
+						temperature: 0.4,
 						responseMimeType: "application/json"
 					}
 				})
@@ -615,9 +592,7 @@ ${JSON.stringify(groundingContext, null, 2)}`;
 				return {
 					replyText: parsed.replyText || rawText,
 					suggestions: Array.isArray(parsed.suggestions) ? parsed.suggestions : [],
-					suggestedQuestions: Array.isArray(parsed.suggestedQuestions)
-						? parsed.suggestedQuestions
-						: []
+					suggestedQuestions: Array.isArray(parsed.suggestedQuestions) ? parsed.suggestedQuestions : []
 				};
 			} catch {
 				return {
@@ -627,8 +602,7 @@ ${JSON.stringify(groundingContext, null, 2)}`;
 				};
 			}
 		} catch (err: any) {
-			const errorMsg =
-				err?.error?.error?.message || err?.message || "Errore durante la chiamata a Gemini AI.";
+			const errorMsg = err?.error?.error?.message || err?.message || "Errore durante la chiamata a Gemini AI.";
 			throw new Error(errorMsg);
 		}
 	}

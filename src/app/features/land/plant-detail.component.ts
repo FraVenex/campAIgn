@@ -670,12 +670,12 @@ export class PlantDetailComponent implements OnInit {
 		const p = this.plant();
 		if (!p) return "";
 		if (p.status === "Stressato") {
-			return `'${p.name}' mostra segni di stress biologico. Valuta un intervento idrico o nutrizionale urgente. Controlla le radici e le foglie per sintomi di parassiti o carenze.`;
+			return `Ascolta il nonno: '${p.name}' è in difficoltà e ha bisogno di aiuto. Dai un'occhiata alle radici e sotto le foglie, e vedi se ha sete o se qualche parassita le dà fastidio.`;
 		}
 		if (p.status === "Attenzione") {
-			return `'${p.name}' necessita di monitoraggio ravvicinato. Ispeziona visivamente foglie e corteccia. Un trattamento preventivo rameico potrebbe essere indicato.`;
+			return `'${p.name}' non mi convince del tutto oggi. Tienila d'occhio da vicino: controlla bene corteccia e rami, e valutiamo un trattamento preventivo leggero.`;
 		}
-		return `'${p.name}' è in piena salute. Continua con le attività ordinarie di monitoraggio e concimazione stagionale.`;
+		return `'${p.name}' è vigorosa e piena di vita. Si vede che ve ne prendete cura: continuiamo così con i lavori ordinari e lasciamola crescere in pace.`;
 	});
 
 	async ngOnInit() {
