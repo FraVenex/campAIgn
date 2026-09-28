@@ -48,5 +48,24 @@
 - **Causa Radice**: In `CalendarService.getLastEventForPlant(plantId)`, la query Supabase includeva `.order('created_at', { ascending: false })` sulla tabella ponte `event_plants`. La tabella `event_plants` è una junction table pura composta unicamente da `(event_id, plant_id)` e priva della colonna `created_at`. Di conseguenza PostgREST falliva con Bad Request (`column created_at does not exist`).
 - **Soluzione**: Rimosso l'ordinamento errato su `created_at` dalla query e applicato l'ordinamento decrescente in memoria sulla proprietà `start` degli eventi collegati (`events(*)`).
 
+## 2026-09-28 - Motore Gesture Touch Premium per la Mappa del Terreno
+- **Problema**: L'interazione touch su dispositivi mobili nella Mappa del Terreno risultava ingestibile:
+  1. In modalità "Modifica Terreno", lo spostamento/pan della mappa a singolo tocco era disabilitato a livello logico (`interactionMode !== 'move'`), rendendo impossibile spostarsi nella mappa per raggiungere altre piante.
+  2. Il pinch-to-zoom utilizzava il ridimensionamento DOM di `width` e `height` in percentuale e manipolava `scrollLeft`/`scrollTop`, provocando pesanti reflow e stuttering a ogni frame di tocco.
+  3. Il pinch non supportava il pan simultaneo a due dita (se le dita traslavano insieme, la distanza non variava e il pan veniva scartato).
+  4. Gli alberi avevano un touch target ridotto (20px), coperto dal pollice senza feedback visivo di sollevamento.
+  5. Il drag & drop non forniva indicatore visivo preliminare di aggancio ai nodi del reticolo (snap feedback) né auto-pan ai bordi del viewport durante lo zoom.
+- **Soluzione Implementata**:
+  - **Accelerazione Hardware GPU**: Sostituito il layout basato su scroll e ridimensionamento DOM con `transform: translate3d(panX, panY, 0) scale(zoom)` con `will-change: transform`, azzerando i reflow durante i gesti touch.
+  - **Pan e Zoom Simultanei e Multi-Touch**: Formula di coordinate esatta che gestisce simultaneamente variazione di scala e traslazione del centro focale tra due dita, con supporto completo per pan a singolo dito sul terreno in qualsiasi modalità operativa.
+  - **Doppio Tocco (Double-Tap to Zoom)**: Supporto nativo al doppio tap (stile Google Maps / Apple Maps) per zoom rapido al 220% sul punto toccato o ripristino istantaneo al 100%.
+  - **Controlli Fluttuanti Ergonomici**: Mini-toolbar verticale fluttuante in alto a destra sul canvas della mappa con pulsanti `+`, `% zoom live`, `−`, e `⛶ Adatta/Centra` con transizioni animate fluide (`cubic-bezier(0.2, 0, 0, 1)`).
+  - **Drag & Drop Premium con Snap Indicator Magnetico**:
+    - Touch target espanso (44-48px) con classe `touch-none`.
+    - Badge visivo di presa attiva (`scale-125`, ombra profonda `shadow-2xl`, anello terracotta).
+    - Guida visiva e cerchio bersaglio magnetico SVG in tempo reale sul nodo più vicino con distinzione di colore immediata (verde salvia per libero, rosso per occupato) e linea guida tratteggiata collegata.
+    - **Edge Auto-Pan**: Se una pianta viene trascinata vicino al bordo del viewport mentre la mappa è ingrandita, la mappa scorre automaticamente in quella direzione consentendo lo spostamento libero attraverso l'intero terreno.
+  - **Disambiguazione Pan vs Tap**: Prevenuta l'apertura accidentale di popup/bottom sheet o la selezione di piante durante le gesture di trascinamento e navigazione della mappa.
+
 
 

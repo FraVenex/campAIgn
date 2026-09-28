@@ -1,8 +1,9 @@
 # Stato del Progetto
 
-## Data Ultimo Aggiornamento: 2026-09-25
+## Data Ultimo Aggiornamento: 2026-09-28
 
 ## Stato Attuale
+- **Mappa Terreno Touch Premium**: Riprogettazione radicale del motore di interazione della Mappa del Terreno: eliminati reflow DOM e scroll container lenti; introdotto rendering hardware-accelerato (`transform: translate3d + scale`), pinch-to-zoom multi-touch simultaneo con pan integrato, doppio tap per zoom/reset rapido, toolbar fluttuante ergonomica (+, zoom %, −, ⛶ centra), drag & drop piante con feedback visivo magnetico SVG in tempo reale (anelli di aggancio verde/rosso e linea guida) ed edge auto-pan per spostare gli ulivi attraverso l'intero appezzamento senza interruzioni.
 - **Arnaldo AI Assistant**: Riprogettazione completa UI/UX e personalizzazione della voce: ora risponde con l'anima di **nonno Arnaldo**, un uomo saggio che ha lavorato tutta la vita con le mani nella terra, parla con gli ulivi e vuole tramandare la sua eredità rurale con calore e schiettezza, senza mai essere sdolcinato. Dialog modale moderno per mobile, avatar illustrato 512x512 ad alta risoluzione (`assets/Arnaldo.jpg`), temperatura aumentata a 0.4 per risposte più fluide e naturali e suggerimenti rapidi contestuali.
 - **Calendario Mobile (UX Apple Calendar)**: Riprogettazione radicale dell'esperienza mobile del Calendario. Eliminata la griglia mensile compressa illeggibile; introdotto il pattern Mini-Mese touch-friendly (giorni circolari ergonomici, dot indicatori di eventi) abbinato all'Agenda del giorno selezionato subito sotto con card dettagliate e pulsante rapido `+ Aggiungi`.
 - **Design System**: Refactor completo. Rimozione DaisyUI, palette camp/ estesa con tokens semantici (ombre, radius, animazioni). Classi utility camp-* (input, btn, card, alert, glass).

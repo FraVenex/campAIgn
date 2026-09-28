@@ -248,185 +248,270 @@ import { PlantPopupComponent, PlantPopupData } from "../../shared/components/pla
 								</div>
 							}
 
-							<div class="relative w-full aspect-[4/3] max-h-[72vh] landscape:max-h-[calc(100vh-130px)] landscape:w-auto landscape:aspect-[4/3] landscape:mx-auto border border-camp-sand/40 rounded-camp shadow-inner bg-camp-sand/10 overflow-hidden">
-								<div 
-									#scrollContainer
-									class="w-full h-full overflow-auto relative map-scroll-container cursor-grab active:cursor-grabbing touch-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
-									(wheel)="onWheel($event, scrollContainer)"
-									(mousedown)="onMapDragStart($event, scrollContainer)"
-									(mousemove)="onMapDrag($event, scrollContainer)"
-									(mouseup)="onMapDragEnd()"
-									(mouseleave)="onMapDragEnd()"
-									(touchstart)="onTouchStart($event, scrollContainer)"
-									(touchmove)="onTouchMove($event, scrollContainer)"
-									(touchend)="onTouchEnd()"
-									(touchcancel)="onTouchEnd()"
-								>
-									<div 
-										class="map-container relative bg-gradient-to-br from-[#dfd7bf] to-[#c7beaa] select-none origin-top-left w-full h-full" 
-										[style.width.%]="zoom() * 100"
-										[style.height.%]="zoom() * 100"
-										(click)="closePlantPopup()"
+							<div 
+								#mapViewport
+								class="map-viewport relative w-full aspect-[4/3] max-h-[72vh] landscape:max-h-[calc(100vh-130px)] landscape:w-auto landscape:aspect-[4/3] landscape:mx-auto border border-camp-sand/40 rounded-camp shadow-inner bg-camp-sand/10 overflow-hidden touch-none select-none cursor-grab active:cursor-grabbing"
+								(mousedown)="onMapMouseDown($event, mapViewport)"
+								(wheel)="onWheel($event, mapViewport)"
+								(touchstart)="onMapTouchStart($event, mapViewport)"
+								(touchmove)="onMapTouchMove($event, mapViewport)"
+								(touchend)="onMapTouchEnd($event, mapViewport)"
+								(touchcancel)="onMapTouchEnd($event, mapViewport)"
+							>
+								<!-- Floating Map Controls (Zoom In/Out, Reset, Indicator) -->
+								<div class="absolute top-3 right-3 z-30 flex flex-col items-center bg-white/90 backdrop-blur-md rounded-2xl shadow-camp-md border border-camp-sand/60 p-1 gap-1 select-none pointer-events-auto">
+									<button
+										type="button"
+										(click)="zoomInAnimated()"
+										[disabled]="zoom() >= 4"
+										title="Ingrandisci (Zoom +)"
+										aria-label="Ingrandisci"
+										class="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-camp-sand/30 active:scale-95 text-camp-earth font-bold text-base transition-all disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
 									>
-										<svg
-											class="absolute inset-0 w-full h-full text-camp-earth/10 pointer-events-none"
-											xmlns="http://www.w3.org/2000/svg"
-										>
-											<defs>
-												<pattern
-													id="parcels"
+										+
+									</button>
+
+									<button
+										type="button"
+										(click)="resetZoomAnimated()"
+										title="Ripristina visuale 100%"
+										aria-label="Ripristina visuale 100%"
+										class="px-1.5 py-0.5 text-[10px] font-bold tracking-tight rounded-md hover:bg-camp-sand/30 active:scale-95 text-camp-olive transition-all cursor-pointer"
+									>
+										{{ zoomPercent() }}%
+									</button>
+
+									<button
+										type="button"
+										(click)="zoomOutAnimated()"
+										[disabled]="zoom() <= 1"
+										title="Rimpicciolisci (Zoom -)"
+										aria-label="Rimpicciolisci"
+										class="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-camp-sand/30 active:scale-95 text-camp-earth font-bold text-base transition-all disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
+									>
+										−
+									</button>
+
+									<div class="w-5 h-px bg-camp-sand/40 my-0.5"></div>
+
+									<button
+										type="button"
+										(click)="resetZoomAnimated()"
+										title="Adatta allo schermo"
+										aria-label="Adatta allo schermo"
+										class="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-camp-sand/30 active:scale-95 text-camp-earth text-xs transition-all cursor-pointer"
+									>
+										⛶
+									</button>
+								</div>
+
+								<div 
+									class="map-container relative bg-gradient-to-br from-[#dfd7bf] to-[#c7beaa] select-none origin-top-left w-full h-full will-change-transform" 
+									[style.transform]="'translate3d(' + panX() + 'px, ' + panY() + 'px, 0px) scale(' + zoom() + ')'"
+									[style.transition]="isTransitioning() ? 'transform 0.25s cubic-bezier(0.2, 0, 0, 1)' : 'none'"
+									(click)="onMapBackgroundClick()"
+								>
+									<svg
+										class="absolute inset-0 w-full h-full text-camp-earth/10 pointer-events-none"
+										xmlns="http://www.w3.org/2000/svg"
+									>
+										<defs>
+											<pattern
+												id="parcels"
+												width="100"
+												height="100"
+												patternUnits="userSpaceOnUse"
+											>
+												<rect
 													width="100"
 													height="100"
-													patternUnits="userSpaceOnUse"
-												>
-													<rect
-														width="100"
-														height="100"
-														fill="none"
-														stroke="currentColor"
-														stroke-width="1.5"
-													/>
-													<line
-														x1="0"
-														y1="25"
-														x2="100"
-														y2="25"
-														stroke="currentColor"
-														stroke-width="0.75"
-														stroke-dasharray="3 3"
-													/>
-													<line
-														x1="0"
-														y1="50"
-														x2="100"
-														y2="50"
-														stroke="currentColor"
-														stroke-width="0.75"
-														stroke-dasharray="3 3"
-													/>
-													<line
-														x1="0"
-														y1="75"
-														x2="100"
-														y2="75"
-														stroke="currentColor"
-														stroke-width="0.75"
-														stroke-dasharray="3 3"
-													/>
-												</pattern>
-											</defs>
-											<rect
-												width="100%"
-												height="100%"
-												fill="url(#parcels)"
-											/>
-
-											<!-- Reticolo geometrico del terreno: visibile SOLO in modalità Modifica Terreno -->
-											@if (interactionMode() === 'move') {
-												<!-- Linee verticali del reticolo -->
-												@for (colX of gridColsLines; track colX) {
-													<line
-														[attr.x1]="colX + '%'"
-														y1="7%"
-														[attr.x2]="colX + '%'"
-														y2="95%"
-														stroke="#964f26"
-														stroke-width="1.2"
-														stroke-dasharray="3 3"
-														opacity="0.35"
-													/>
-												}
-												<!-- Linee orizzontali del reticolo -->
-												@for (rowY of gridRowsLines; track rowY) {
-													<line
-														x1="5%"
-														[attr.y1]="rowY + '%'"
-														x2="95%"
-														[attr.y2]="rowY + '%'"
-														stroke="#964f26"
-														stroke-width="1.2"
-														stroke-dasharray="3 3"
-														opacity="0.35"
-													/>
-												}
-												<!-- Nodi del reticolo: punti discreti di aggancio -->
-												@for (node of gridNodes; track node.x + '-' + node.y) {
-													<circle
-														[attr.cx]="node.x + '%'"
-														[attr.cy]="node.y + '%'"
-														r="2.5"
-														fill="#964f26"
-														opacity="0.4"
-													/>
-												}
-											}
-										</svg>
-
-								@for (t of grassTufts(); track t.x + "-" + t.y) {
-									<span
-										class="absolute text-[8px] opacity-15 pointer-events-none select-none text-camp-success"
-										[style.left.%]="t.x"
-										[style.top.%]="t.y"
-										>🌿</span
-									>
-								}
-
-								@for (p of filteredPlants(); track p.id) {
-									<div
-										class="absolute"
-										[class.z-40]="activePopupPlantId() === p.id"
-										[class.z-20]="selectedPlantIds().has(p.id!) && activePopupPlantId() !== p.id"
-										[class.z-10]="!selectedPlantIds().has(p.id!) && activePopupPlantId() !== p.id"
-										[style.left.%]="p.position_x"
-										[style.top.%]="p.position_y"
-									>
-										@if (interactionMode() === 'view') {
-											<button
-												type="button"
-												(click)="$event.stopPropagation(); openPlantPopup(p)"
-												[class]="getPlantMarkerClass(p)"
-												class="w-5 h-5 sm:w-7 sm:h-7 md:w-9 md:h-9 transform -translate-x-1/2 -translate-y-1/2 rounded-full transition-all duration-300 flex items-center justify-center cursor-pointer shadow-md select-none hover:scale-125 focus:outline-none animate-scale-in before:content-[''] before:absolute before:-inset-2 before:rounded-full"
-											>
-												<span class="text-[9px] sm:text-xs md:text-base select-none leading-none">🌳</span>
-											</button>
-										} @else if (interactionMode() === 'select') {
-											<button
-												type="button"
-												(click)="toggleSelection(p, $event)"
-												[class]="getPlantMarkerClass(p)"
-												[class.ring-2]="selectedPlantIds().has(p.id!)"
-												[class.md:ring-4]="selectedPlantIds().has(p.id!)"
-												[class.ring-camp-sage]="selectedPlantIds().has(p.id!)"
-												[class.scale-110]="selectedPlantIds().has(p.id!)"
-												class="relative w-5 h-5 sm:w-7 sm:h-7 md:w-9 md:h-9 transform -translate-x-1/2 -translate-y-1/2 rounded-full transition-all duration-300 flex items-center justify-center cursor-pointer shadow-md select-none hover:scale-125 focus:outline-none animate-scale-in before:content-[''] before:absolute before:-inset-2 before:rounded-full"
-											>
-												<span class="text-[9px] sm:text-xs md:text-base select-none leading-none">🌳</span>
-												@if (selectedPlantIds().has(p.id!)) {
-													<span class="absolute -top-1 -right-1 w-3 h-3 md:w-4 md:h-4 bg-camp-sage text-white text-[7px] md:text-[10px] font-bold rounded-full flex items-center justify-center shadow">✓</span>
-												}
-											</button>
-										} @else if (interactionMode() === 'move') {
-											<div
-												(mousedown)="onDragStart($event, p)"
-												(touchstart)="onDragStart($event, p)"
-												[class]="getPlantMarkerClass(p)"
-												class="w-5 h-5 sm:w-7 sm:h-7 md:w-9 md:h-9 transform -translate-x-1/2 -translate-y-1/2 rounded-full transition-all duration-300 flex items-center justify-center shadow-md select-none hover:scale-125 focus:outline-none animate-scale-in cursor-move active:cursor-grabbing before:content-[''] before:absolute before:-inset-2 before:rounded-full"
-											>
-												<span class="text-[9px] sm:text-xs md:text-base select-none leading-none">🌳</span>
-											</div>
-										}
-
-										@if (interactionMode() === 'view' && activePopupPlantId() === p.id && activePopupData()) {
-											<div class="hidden md:block">
-												<app-plant-popup
-													[data]="activePopupData()!"
-													(close)="closePlantPopup()"
+													fill="none"
+													stroke="currentColor"
+													stroke-width="1.5"
 												/>
-											</div>
+												<line
+													x1="0"
+													y1="25"
+													x2="100"
+													y2="25"
+													stroke="currentColor"
+													stroke-width="0.75"
+													stroke-dasharray="3 3"
+												/>
+												<line
+													x1="0"
+													y1="50"
+													x2="100"
+													y2="50"
+													stroke="currentColor"
+													stroke-width="0.75"
+													stroke-dasharray="3 3"
+												/>
+												<line
+													x1="0"
+													y1="75"
+													x2="100"
+													y2="75"
+													stroke="currentColor"
+													stroke-width="0.75"
+													stroke-dasharray="3 3"
+												/>
+											</pattern>
+										</defs>
+										<rect
+											width="100%"
+											height="100%"
+											fill="url(#parcels)"
+										/>
+
+										<!-- Reticolo geometrico del terreno: visibile SOLO in modalità Modifica Terreno -->
+										@if (interactionMode() === 'move') {
+											<!-- Linee verticali del reticolo -->
+											@for (colX of gridColsLines; track colX) {
+												<line
+													[attr.x1]="colX + '%'"
+													y1="7%"
+													[attr.x2]="colX + '%'"
+													y2="95%"
+													stroke="#964f26"
+													stroke-width="1.2"
+													stroke-dasharray="3 3"
+													opacity="0.35"
+												/>
+											}
+											<!-- Linee orizzontali del reticolo -->
+											@for (rowY of gridRowsLines; track rowY) {
+												<line
+													x1="5%"
+													[attr.y1]="rowY + '%'"
+													x2="95%"
+													[attr.y2]="rowY + '%'"
+													stroke="#964f26"
+													stroke-width="1.2"
+													stroke-dasharray="3 3"
+													opacity="0.35"
+												/>
+											}
+											<!-- Nodi del reticolo: punti discreti di aggancio -->
+											@for (node of gridNodes; track node.x + '-' + node.y) {
+												<circle
+													[attr.cx]="node.x + '%'"
+													[attr.cy]="node.y + '%'"
+													r="2.5"
+													fill="#964f26"
+													opacity="0.4"
+												/>
+											}
+
+											<!-- Indicatore magnetico di aggancio in tempo reale (Snap Target Preview) -->
+											@if (dragSnapPreview(); as target) {
+												<g class="pointer-events-none">
+													<circle
+														[attr.cx]="target.x + '%'"
+														[attr.cy]="target.y + '%'"
+														r="14"
+														[attr.fill]="target.isOccupied ? 'rgba(239, 68, 68, 0.22)' : 'rgba(138, 171, 143, 0.35)'"
+														[attr.stroke]="target.isOccupied ? '#dc2626' : '#4a6741'"
+														stroke-width="2"
+														stroke-dasharray="3 3"
+													/>
+													<circle
+														[attr.cx]="target.x + '%'"
+														[attr.cy]="target.y + '%'"
+														r="4.5"
+														[attr.fill]="target.isOccupied ? '#dc2626' : '#4a6741'"
+													/>
+													@if (activeDragPlant) {
+														<line
+															[attr.x1]="activeDragPlant.position_x + '%'"
+															[attr.y1]="activeDragPlant.position_y + '%'"
+															[attr.x2]="target.x + '%'"
+															[attr.y2]="target.y + '%'"
+															[attr.stroke]="target.isOccupied ? '#dc2626' : '#4a6741'"
+															stroke-width="1.5"
+															stroke-dasharray="2 2"
+															opacity="0.75"
+														/>
+													}
+												</g>
+											}
 										}
-									</div>
-								}
-									</div>
+									</svg>
+
+									@for (t of grassTufts(); track t.x + "-" + t.y) {
+										<span
+											class="absolute text-[8px] opacity-15 pointer-events-none select-none text-camp-success"
+											[style.left.%]="t.x"
+											[style.top.%]="t.y"
+											>🌿</span
+										>
+									}
+
+									@for (p of filteredPlants(); track p.id) {
+										<div
+											class="absolute pointer-events-auto"
+											[class.z-50]="activeDragPlant?.id === p.id"
+											[class.z-40]="activePopupPlantId() === p.id && activeDragPlant?.id !== p.id"
+											[class.z-20]="selectedPlantIds().has(p.id!) && activePopupPlantId() !== p.id && activeDragPlant?.id !== p.id"
+											[class.z-10]="!selectedPlantIds().has(p.id!) && activePopupPlantId() !== p.id && activeDragPlant?.id !== p.id"
+											[style.left.%]="p.position_x"
+											[style.top.%]="p.position_y"
+										>
+											@if (interactionMode() === 'view') {
+												<button
+													type="button"
+													(click)="handlePlantClick(p, $event)"
+													[class]="getPlantMarkerClass(p)"
+													class="w-6 h-6 sm:w-7 sm:h-7 md:w-9 md:h-9 transform -translate-x-1/2 -translate-y-1/2 rounded-full transition-all duration-300 flex items-center justify-center cursor-pointer shadow-md select-none hover:scale-125 focus:outline-none animate-scale-in touch-none before:content-[''] before:absolute before:-inset-2.5 before:rounded-full"
+												>
+													<span class="text-[10px] sm:text-xs md:text-base select-none leading-none">🌳</span>
+												</button>
+											} @else if (interactionMode() === 'select') {
+												<button
+													type="button"
+													(click)="handleSelectClick(p, $event)"
+													[class]="getPlantMarkerClass(p)"
+													[class.ring-2]="selectedPlantIds().has(p.id!)"
+													[class.md:ring-4]="selectedPlantIds().has(p.id!)"
+													[class.ring-camp-sage]="selectedPlantIds().has(p.id!)"
+													[class.scale-110]="selectedPlantIds().has(p.id!)"
+													class="relative w-6 h-6 sm:w-7 sm:h-7 md:w-9 md:h-9 transform -translate-x-1/2 -translate-y-1/2 rounded-full transition-all duration-300 flex items-center justify-center cursor-pointer shadow-md select-none hover:scale-125 focus:outline-none animate-scale-in touch-none before:content-[''] before:absolute before:-inset-2.5 before:rounded-full"
+												>
+													<span class="text-[10px] sm:text-xs md:text-base select-none leading-none">🌳</span>
+													@if (selectedPlantIds().has(p.id!)) {
+														<span class="absolute -top-1 -right-1 w-3.5 h-3.5 md:w-4 md:h-4 bg-camp-sage text-white text-[8px] md:text-[10px] font-bold rounded-full flex items-center justify-center shadow">✓</span>
+													}
+												</button>
+											} @else if (interactionMode() === 'move') {
+												<div
+													(mousedown)="onPlantDragStart($event, p, mapViewport)"
+													(touchstart)="onPlantDragStart($event, p, mapViewport)"
+													[class]="getPlantMarkerClass(p)"
+													[class.scale-125]="activeDragPlant?.id === p.id"
+													[class.shadow-2xl]="activeDragPlant?.id === p.id"
+													[class.ring-4]="activeDragPlant?.id === p.id"
+													[class.ring-camp-terracotta]="activeDragPlant?.id === p.id"
+													class="w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 transform -translate-x-1/2 -translate-y-1/2 rounded-full transition-transform duration-100 flex items-center justify-center shadow-md select-none hover:scale-125 focus:outline-none animate-scale-in cursor-grab active:cursor-grabbing touch-none before:content-[''] before:absolute before:-inset-3 before:rounded-full"
+												>
+													<span class="text-xs sm:text-sm md:text-base select-none leading-none">🌳</span>
+													@if (activeDragPlant?.id === p.id) {
+														<span class="absolute -top-2 -right-2 px-1 py-0.2 bg-camp-terracotta text-white text-[8px] font-bold rounded-full shadow-md">
+															✋
+														</span>
+													}
+												</div>
+											}
+
+											@if (interactionMode() === 'view' && activePopupPlantId() === p.id && activePopupData()) {
+												<div class="hidden md:block">
+													<app-plant-popup
+														[data]="activePopupData()!"
+														(close)="closePlantPopup()"
+													/>
+												</div>
+											}
+										</div>
+									}
 								</div>
 							</div>
 
@@ -1348,6 +1433,13 @@ export class LandComponent implements OnInit, OnDestroy {
 	private cdr = inject(ChangeDetectorRef);
 
 	ngOnDestroy() {
+		this.stopAutoPan();
+		if (this.globalMoveHandler) {
+			window.removeEventListener("mousemove", this.globalMoveHandler);
+		}
+		if (this.globalUpHandler) {
+			window.removeEventListener("mouseup", this.globalUpHandler);
+		}
 		this.arnaldoService.setFabVisible(true);
 	}
 
@@ -1388,6 +1480,11 @@ export class LandComponent implements OnInit, OnDestroy {
 	toast = signal<{ message: string; type: "success" | "error" | "info" } | null>(null);
 
 	zoom = signal<number>(1);
+	panX = signal<number>(0);
+	panY = signal<number>(0);
+	isTransitioning = signal<boolean>(false);
+	dragSnapPreview = signal<{ x: number; y: number; isOccupied: boolean } | null>(null);
+	zoomPercent = computed(() => Math.round(this.zoom() * 100));
 
 	activePopupPlantId = signal<string | null>(null);
 	activePopupData = signal<PlantPopupData | null>(null);
@@ -1416,12 +1513,36 @@ export class LandComponent implements OnInit, OnDestroy {
 		return nodes;
 	})();
 
-	private activeDragPlant: Plant | null = null;
-	private dragStartX = 0;
-	private dragStartY = 0;
+	activeDragPlant: Plant | null = null;
+	private plantDragStartX = 0;
+	private plantDragStartY = 0;
 	private initialPlantX = 0;
 	private initialPlantY = 0;
-	private hasDragged = false;
+	private hasDraggedPlant = false;
+	private lastClientX = 0;
+	private lastClientY = 0;
+	private autoPanRafId: number | null = null;
+	private autoPanSpeedX = 0;
+	private autoPanSpeedY = 0;
+
+	// Gesture & Pan state
+	isMapDragging = false;
+	hasPannedMap = false;
+	private mapDragStartX = 0;
+	private mapDragStartY = 0;
+	private initialPanX = 0;
+	private initialPanY = 0;
+	private isPinching = false;
+	private initialPinchDistance = 0;
+	private initialPinchZoom = 1;
+	private initialPinchPanX = 0;
+	private initialPinchPanY = 0;
+	private pinchMapX = 0;
+	private pinchMapY = 0;
+	private lastTapTime = 0;
+	private lastTapPos = { x: 0, y: 0 };
+	private globalMoveHandler: ((e: MouseEvent) => void) | null = null;
+	private globalUpHandler: (() => void) | null = null;
 
 	plantsCount = computed(() => this.filteredPlants().length);
 
@@ -1599,6 +1720,9 @@ export class LandComponent implements OnInit, OnDestroy {
 	toggleMoveMode() {
 		if (this.interactionMode() === 'move') {
 			this.interactionMode.set('view');
+			this.activeDragPlant = null;
+			this.dragSnapPreview.set(null);
+			this.stopAutoPan();
 			this.arnaldoService.setFabVisible(true);
 		} else {
 			this.interactionMode.set('move');
@@ -1630,119 +1754,506 @@ export class LandComponent implements OnInit, OnDestroy {
 		this.activePopupData.set(null);
 	}
 
-	zoomIn() {
-		this.zoom.update(z => Math.min(4, z + 0.5));
+	private clampPan(targetPanX: number, targetPanY: number, currentZoom: number, containerRect: DOMRect): { x: number; y: number } {
+		if (!containerRect || containerRect.width === 0 || currentZoom <= 1) {
+			return { x: 0, y: 0 };
+		}
+		const minX = containerRect.width * (1 - currentZoom);
+		const minY = containerRect.height * (1 - currentZoom);
+		const clampedX = Math.min(0, Math.max(minX, targetPanX));
+		const clampedY = Math.min(0, Math.max(minY, targetPanY));
+		return { x: clampedX, y: clampedY };
 	}
 
-	zoomOut() {
-		this.zoom.update(z => Math.max(1, z - 0.5));
+	@HostListener("window:resize")
+	onWindowResize() {
+		const viewport = document.querySelector(".map-viewport") as HTMLElement;
+		if (viewport && this.zoom() > 1) {
+			const rect = viewport.getBoundingClientRect();
+			const clamped = this.clampPan(this.panX(), this.panY(), this.zoom(), rect);
+			this.panX.set(clamped.x);
+			this.panY.set(clamped.y);
+		}
 	}
 
-	resetZoom() {
-		this.zoom.set(1);
-	}
-
-	private mapIsDragging = false;
-	private mapDragStartX = 0;
-	private mapDragStartY = 0;
-	private mapScrollStartX = 0;
-	private mapScrollStartY = 0;
-	private initialPinchDistance = 0;
-	private initialZoomOnPinch = 1;
-
-	onMapDragStart(event: MouseEvent, container: HTMLElement) {
-		if (event.button !== 0 || this.interactionMode() === 'move') return;
-		this.mapIsDragging = true;
+	onMapMouseDown(event: MouseEvent, viewport: HTMLElement) {
+		if (event.button !== 0 || this.activeDragPlant) return;
+		this.isMapDragging = true;
+		this.hasPannedMap = false;
 		this.mapDragStartX = event.clientX;
 		this.mapDragStartY = event.clientY;
-		this.mapScrollStartX = container.scrollLeft;
-		this.mapScrollStartY = container.scrollTop;
+		this.initialPanX = this.panX();
+		this.initialPanY = this.panY();
+		this.isTransitioning.set(false);
+
+		if (this.globalMoveHandler) window.removeEventListener("mousemove", this.globalMoveHandler);
+		if (this.globalUpHandler) window.removeEventListener("mouseup", this.globalUpHandler);
+
+		this.globalMoveHandler = (e: MouseEvent) => {
+			if (!this.isMapDragging) return;
+			const dx = e.clientX - this.mapDragStartX;
+			const dy = e.clientY - this.mapDragStartY;
+			if (Math.hypot(dx, dy) > 5) {
+				this.hasPannedMap = true;
+			}
+			const rect = viewport.getBoundingClientRect();
+			const clamped = this.clampPan(this.initialPanX + dx, this.initialPanY + dy, this.zoom(), rect);
+			this.panX.set(clamped.x);
+			this.panY.set(clamped.y);
+		};
+
+		this.globalUpHandler = () => {
+			this.isMapDragging = false;
+			if (this.globalMoveHandler) window.removeEventListener("mousemove", this.globalMoveHandler);
+			if (this.globalUpHandler) window.removeEventListener("mouseup", this.globalUpHandler);
+			this.globalMoveHandler = null;
+			this.globalUpHandler = null;
+			setTimeout(() => {
+				this.hasPannedMap = false;
+			}, 180);
+		};
+
+		window.addEventListener("mousemove", this.globalMoveHandler);
+		window.addEventListener("mouseup", this.globalUpHandler);
 	}
 
-	onMapDrag(event: MouseEvent, container: HTMLElement) {
-		if (!this.mapIsDragging) return;
+	onWheel(event: WheelEvent, viewport: HTMLElement) {
 		event.preventDefault();
-		const dx = event.clientX - this.mapDragStartX;
-		const dy = event.clientY - this.mapDragStartY;
-		container.scrollLeft = this.mapScrollStartX - dx;
-		container.scrollTop = this.mapScrollStartY - dy;
-	}
-
-	onMapDragEnd() {
-		this.mapIsDragging = false;
-	}
-
-	onWheel(event: WheelEvent, container: HTMLElement) {
-		event.preventDefault();
-		const zoomDelta = event.deltaY > 0 ? -0.2 : 0.2;
+		const rect = viewport.getBoundingClientRect();
 		const oldZoom = this.zoom();
-		const newZoom = Math.max(1, Math.min(4, oldZoom + zoomDelta));
-		if (oldZoom !== newZoom) {
-			this.applyZoom(newZoom, event.clientX, event.clientY, container);
+		const zoomDelta = event.deltaY > 0 ? -0.2 : 0.2;
+		const newZoom = Math.max(1, Math.min(4, parseFloat((oldZoom + zoomDelta).toFixed(2))));
+		if (oldZoom === newZoom) return;
+
+		this.isTransitioning.set(false);
+		const mouseX = event.clientX - rect.left;
+		const mouseY = event.clientY - rect.top;
+
+		const mapPtX = (mouseX - this.panX()) / oldZoom;
+		const mapPtY = (mouseY - this.panY()) / oldZoom;
+
+		const targetPanX = mouseX - (mapPtX * newZoom);
+		const targetPanY = mouseY - (mapPtY * newZoom);
+
+		const clamped = this.clampPan(targetPanX, targetPanY, newZoom, rect);
+		this.zoom.set(newZoom);
+		this.panX.set(clamped.x);
+		this.panY.set(clamped.y);
+	}
+
+	onMapTouchStart(event: TouchEvent, viewport: HTMLElement) {
+		if (this.activeDragPlant) return;
+
+		if (event.touches.length === 1) {
+			const t = event.touches[0];
+			const now = Date.now();
+			const dist = Math.hypot(t.clientX - this.lastTapPos.x, t.clientY - this.lastTapPos.y);
+
+			if (now - this.lastTapTime < 320 && dist < 30) {
+				if (event.cancelable) event.preventDefault();
+				this.handleDoubleTap(t.clientX, t.clientY, viewport);
+				this.lastTapTime = 0;
+				return;
+			}
+			this.lastTapTime = now;
+			this.lastTapPos = { x: t.clientX, y: t.clientY };
+
+			this.isMapDragging = true;
+			this.hasPannedMap = false;
+			this.mapDragStartX = t.clientX;
+			this.mapDragStartY = t.clientY;
+			this.initialPanX = this.panX();
+			this.initialPanY = this.panY();
+			this.isTransitioning.set(false);
+		} else if (event.touches.length === 2) {
+			if (event.cancelable) event.preventDefault();
+			this.isPinching = true;
+			this.isMapDragging = false;
+			this.hasPannedMap = true;
+
+			const t1 = event.touches[0];
+			const t2 = event.touches[1];
+			this.initialPinchDistance = this.getTouchDistance(t1, t2);
+			this.initialPinchZoom = this.zoom();
+			this.initialPinchPanX = this.panX();
+			this.initialPinchPanY = this.panY();
+
+			const rect = viewport.getBoundingClientRect();
+			const midX = ((t1.clientX + t2.clientX) / 2) - rect.left;
+			const midY = ((t1.clientY + t2.clientY) / 2) - rect.top;
+
+			this.pinchMapX = (midX - this.initialPinchPanX) / this.initialPinchZoom;
+			this.pinchMapY = (midY - this.initialPinchPanY) / this.initialPinchZoom;
+			this.isTransitioning.set(false);
 		}
 	}
 
-	onTouchStart(event: TouchEvent, container: HTMLElement) {
-		if (event.touches.length === 1 && this.interactionMode() !== 'move') {
-			this.mapIsDragging = true;
-			this.mapDragStartX = event.touches[0].clientX;
-			this.mapDragStartY = event.touches[0].clientY;
-			this.mapScrollStartX = container.scrollLeft;
-			this.mapScrollStartY = container.scrollTop;
-		} else if (event.touches.length === 2) {
-			this.initialPinchDistance = this.getTouchDistance(event.touches[0], event.touches[1]);
-			this.initialZoomOnPinch = this.zoom();
-		}
-	}
+	onMapTouchMove(event: TouchEvent, viewport: HTMLElement) {
+		if (this.activeDragPlant) return;
 
-	onTouchMove(event: TouchEvent, container: HTMLElement) {
-		if (event.touches.length === 1 && this.mapIsDragging) {
-			event.preventDefault();
-			const dx = event.touches[0].clientX - this.mapDragStartX;
-			const dy = event.touches[0].clientY - this.mapDragStartY;
-			container.scrollLeft = this.mapScrollStartX - dx;
-			container.scrollTop = this.mapScrollStartY - dy;
-		} else if (event.touches.length === 2) {
-			event.preventDefault();
-			const currentDistance = this.getTouchDistance(event.touches[0], event.touches[1]);
+		if (event.touches.length === 2 && this.isPinching) {
+			if (event.cancelable) event.preventDefault();
+			const t1 = event.touches[0];
+			const t2 = event.touches[1];
+			const currentDistance = this.getTouchDistance(t1, t2);
+			if (this.initialPinchDistance <= 0) return;
+
 			const scale = currentDistance / this.initialPinchDistance;
-			
-			const newZoom = Math.max(1, Math.min(4, this.initialZoomOnPinch * scale));
-			
-			const centerX = (event.touches[0].clientX + event.touches[1].clientX) / 2;
-			const centerY = (event.touches[0].clientY + event.touches[1].clientY) / 2;
+			const newZoom = Math.max(1, Math.min(4, parseFloat((this.initialPinchZoom * scale).toFixed(2))));
 
-			this.applyZoom(newZoom, centerX, centerY, container);
+			const rect = viewport.getBoundingClientRect();
+			const midX = ((t1.clientX + t2.clientX) / 2) - rect.left;
+			const midY = ((t1.clientY + t2.clientY) / 2) - rect.top;
+
+			const targetPanX = midX - (this.pinchMapX * newZoom);
+			const targetPanY = midY - (this.pinchMapY * newZoom);
+
+			const clamped = this.clampPan(targetPanX, targetPanY, newZoom, rect);
+			this.zoom.set(newZoom);
+			this.panX.set(clamped.x);
+			this.panY.set(clamped.y);
+		} else if (event.touches.length === 1 && this.isMapDragging) {
+			const t = event.touches[0];
+			const dx = t.clientX - this.mapDragStartX;
+			const dy = t.clientY - this.mapDragStartY;
+
+			if (Math.hypot(dx, dy) > 5) {
+				this.hasPannedMap = true;
+				if (event.cancelable) event.preventDefault();
+			}
+
+			const rect = viewport.getBoundingClientRect();
+			const clamped = this.clampPan(this.initialPanX + dx, this.initialPanY + dy, this.zoom(), rect);
+			this.panX.set(clamped.x);
+			this.panY.set(clamped.y);
 		}
 	}
 
-	onTouchEnd() {
-		this.mapIsDragging = false;
-		this.initialPinchDistance = 0;
+	onMapTouchEnd(event: TouchEvent, viewport: HTMLElement) {
+		if (event.touches.length === 0) {
+			this.isMapDragging = false;
+			this.isPinching = false;
+			this.initialPinchDistance = 0;
+			setTimeout(() => {
+				this.hasPannedMap = false;
+			}, 180);
+		} else if (event.touches.length === 1) {
+			this.isPinching = false;
+			this.isMapDragging = true;
+			const t = event.touches[0];
+			this.mapDragStartX = t.clientX;
+			this.mapDragStartY = t.clientY;
+			this.initialPanX = this.panX();
+			this.initialPanY = this.panY();
+		}
 	}
 
 	private getTouchDistance(t1: Touch, t2: Touch): number {
 		const dx = t1.clientX - t2.clientX;
 		const dy = t1.clientY - t2.clientY;
-		return Math.sqrt(dx * dx + dy * dy);
+		return Math.hypot(dx, dy);
 	}
 
-	private applyZoom(newZoom: number, clientX: number, clientY: number, container: HTMLElement) {
-		const oldZoom = this.zoom();
-		if (oldZoom === newZoom) return;
+	private handleDoubleTap(clientX: number, clientY: number, viewport: HTMLElement) {
+		if (this.zoom() > 1.1) {
+			this.resetZoomAnimated();
+		} else {
+			this.zoomToPointAnimated(2.2, clientX, clientY, viewport);
+		}
+	}
 
-		const rect = container.getBoundingClientRect();
+	zoomInAnimated() {
+		const next = Math.min(4, Math.round((this.zoom() + 0.5) * 10) / 10);
+		this.zoomToCenterAnimated(next);
+	}
+
+	zoomOutAnimated() {
+		const next = Math.max(1, Math.round((this.zoom() - 0.5) * 10) / 10);
+		this.zoomToCenterAnimated(next);
+	}
+
+	resetZoomAnimated() {
+		this.isTransitioning.set(true);
+		this.zoom.set(1);
+		this.panX.set(0);
+		this.panY.set(0);
+		setTimeout(() => {
+			this.isTransitioning.set(false);
+		}, 260);
+	}
+
+	zoomIn() {
+		this.zoomInAnimated();
+	}
+
+	zoomOut() {
+		this.zoomOutAnimated();
+	}
+
+	resetZoom() {
+		this.resetZoomAnimated();
+	}
+
+	private zoomToCenterAnimated(targetZoom: number) {
+		const viewport = document.querySelector(".map-viewport") as HTMLElement;
+		if (!viewport) {
+			this.zoom.set(targetZoom);
+			return;
+		}
+		const rect = viewport.getBoundingClientRect();
+		this.zoomToPointAnimated(targetZoom, rect.left + rect.width / 2, rect.top + rect.height / 2, viewport);
+	}
+
+	private zoomToPointAnimated(targetZoom: number, clientX: number, clientY: number, viewport: HTMLElement) {
+		this.isTransitioning.set(true);
+		const rect = viewport.getBoundingClientRect();
+		const oldZoom = this.zoom();
 		const mouseX = clientX - rect.left;
 		const mouseY = clientY - rect.top;
 
-		const mapX = (container.scrollLeft + mouseX) / oldZoom;
-		const mapY = (container.scrollTop + mouseY) / oldZoom;
+		const mapPtX = (mouseX - this.panX()) / oldZoom;
+		const mapPtY = (mouseY - this.panY()) / oldZoom;
 
-		this.zoom.set(parseFloat(newZoom.toFixed(2)));
-		this.cdr.detectChanges();
+		const targetPanX = mouseX - (mapPtX * targetZoom);
+		const targetPanY = mouseY - (mapPtY * targetZoom);
 
-		container.scrollLeft = (mapX * newZoom) - mouseX;
-		container.scrollTop = (mapY * newZoom) - mouseY;
+		const clamped = this.clampPan(targetPanX, targetPanY, targetZoom, rect);
+		this.zoom.set(targetZoom);
+		this.panX.set(clamped.x);
+		this.panY.set(clamped.y);
+
+		setTimeout(() => {
+			this.isTransitioning.set(false);
+		}, 260);
+	}
+
+	onMapBackgroundClick() {
+		if (this.hasPannedMap) return;
+		this.closePlantPopup();
+	}
+
+	handlePlantClick(plant: Plant, event: Event) {
+		event.stopPropagation();
+		if (this.hasPannedMap) return;
+		this.openPlantPopup(plant);
+	}
+
+	handleSelectClick(plant: Plant, event: Event) {
+		event.stopPropagation();
+		if (this.hasPannedMap) return;
+		this.toggleSelection(plant);
+	}
+
+	onPlantDragStart(event: MouseEvent | TouchEvent, plant: Plant, viewport: HTMLElement) {
+		if (this.interactionMode() !== 'move') return;
+		event.stopPropagation();
+		if (event.cancelable) event.preventDefault();
+
+		this.activeDragPlant = plant;
+		this.hasDraggedPlant = false;
+
+		const clientX = event instanceof MouseEvent ? event.clientX : event.touches[0].clientX;
+		const clientY = event instanceof MouseEvent ? event.clientY : event.touches[0].clientY;
+
+		this.plantDragStartX = clientX;
+		this.plantDragStartY = clientY;
+		this.lastClientX = clientX;
+		this.lastClientY = clientY;
+		this.initialPlantX = plant.position_x;
+		this.initialPlantY = plant.position_y;
+
+		const snapped = this.snapToGrid(plant.position_x, plant.position_y);
+		const isOccupied = this.isNodeOccupied(snapped.x, snapped.y, plant.id);
+		this.dragSnapPreview.set({ x: snapped.x, y: snapped.y, isOccupied });
+
+		const moveHandler = (moveEvent: MouseEvent | TouchEvent) => {
+			this.onPlantDragging(moveEvent, viewport);
+		};
+
+		const endHandler = () => {
+			this.onPlantDragEnd();
+			window.removeEventListener("mousemove", moveHandler);
+			window.removeEventListener("mouseup", endHandler);
+			window.removeEventListener("touchmove", moveHandler);
+			window.removeEventListener("touchend", endHandler);
+			window.removeEventListener("touchcancel", endHandler);
+		};
+
+		window.addEventListener("mousemove", moveHandler, { passive: false });
+		window.addEventListener("mouseup", endHandler);
+		window.addEventListener("touchmove", moveHandler, { passive: false });
+		window.addEventListener("touchend", endHandler);
+		window.addEventListener("touchcancel", endHandler);
+	}
+
+	private onPlantDragging(event: MouseEvent | TouchEvent, viewport: HTMLElement) {
+		if (!this.activeDragPlant) return;
+		if (event.cancelable) event.preventDefault();
+
+		if (event instanceof TouchEvent && event.touches.length > 1) {
+			this.onPlantDragEnd();
+			return;
+		}
+
+		const clientX = event instanceof MouseEvent ? event.clientX : event.touches[0].clientX;
+		const clientY = event instanceof MouseEvent ? event.clientY : event.touches[0].clientY;
+
+		this.lastClientX = clientX;
+		this.lastClientY = clientY;
+
+		const deltaX = clientX - this.plantDragStartX;
+		const deltaY = clientY - this.plantDragStartY;
+
+		if (Math.hypot(deltaX, deltaY) > 6) {
+			this.hasDraggedPlant = true;
+		}
+
+		this.updateDraggedPlantPosition(clientX, clientY, viewport);
+		this.checkAutoPan(clientX, clientY, viewport);
+	}
+
+	private updateDraggedPlantPosition(clientX: number, clientY: number, viewport: HTMLElement) {
+		if (!this.activeDragPlant) return;
+
+		const rect = viewport.getBoundingClientRect();
+		const mapPixelX = (clientX - rect.left - this.panX()) / this.zoom();
+		const mapPixelY = (clientY - rect.top - this.panY()) / this.zoom();
+
+		const pctX = (mapPixelX / rect.width) * 100;
+		const pctY = (mapPixelY / rect.height) * 100;
+
+		const clampedX = Math.max(5, Math.min(95, pctX));
+		const clampedY = Math.max(5, Math.min(95, pctY));
+
+		const snapped = this.snapToGrid(clampedX, clampedY);
+		const isOccupied = this.isNodeOccupied(snapped.x, snapped.y, this.activeDragPlant.id);
+		this.dragSnapPreview.set({ x: snapped.x, y: snapped.y, isOccupied });
+
+		const updatedPlants = this.plants().map(p => {
+			if (p.id === this.activeDragPlant!.id) {
+				return { ...p, position_x: parseFloat(clampedX.toFixed(2)), position_y: parseFloat(clampedY.toFixed(2)) };
+			}
+			return p;
+		});
+		this.plants.set(updatedPlants);
+	}
+
+	private checkAutoPan(clientX: number, clientY: number, viewport: HTMLElement) {
+		if (this.zoom() <= 1) {
+			this.stopAutoPan();
+			return;
+		}
+
+		const rect = viewport.getBoundingClientRect();
+		const margin = 36;
+		let sx = 0;
+		let sy = 0;
+
+		if (clientX < rect.left + margin && this.panX() < 0) {
+			sx = 7;
+		} else if (clientX > rect.right - margin && this.panX() > rect.width * (1 - this.zoom())) {
+			sx = -7;
+		}
+
+		if (clientY < rect.top + margin && this.panY() < 0) {
+			sy = 7;
+		} else if (clientY > rect.bottom - margin && this.panY() > rect.height * (1 - this.zoom())) {
+			sy = -7;
+		}
+
+		if (sx !== 0 || sy !== 0) {
+			this.autoPanSpeedX = sx;
+			this.autoPanSpeedY = sy;
+			if (this.autoPanRafId === null) {
+				this.runAutoPan(viewport);
+			}
+		} else {
+			this.stopAutoPan();
+		}
+	}
+
+	private runAutoPan(viewport: HTMLElement) {
+		this.autoPanRafId = requestAnimationFrame(() => {
+			if (!this.activeDragPlant || (this.autoPanSpeedX === 0 && this.autoPanSpeedY === 0)) {
+				this.stopAutoPan();
+				return;
+			}
+
+			const rect = viewport.getBoundingClientRect();
+			const nextPanX = this.panX() + this.autoPanSpeedX;
+			const nextPanY = this.panY() + this.autoPanSpeedY;
+			const clamped = this.clampPan(nextPanX, nextPanY, this.zoom(), rect);
+			this.panX.set(clamped.x);
+			this.panY.set(clamped.y);
+
+			this.updateDraggedPlantPosition(this.lastClientX, this.lastClientY, viewport);
+			this.checkAutoPan(this.lastClientX, this.lastClientY, viewport);
+		});
+	}
+
+	private stopAutoPan() {
+		if (this.autoPanRafId !== null) {
+			cancelAnimationFrame(this.autoPanRafId);
+			this.autoPanRafId = null;
+		}
+		this.autoPanSpeedX = 0;
+		this.autoPanSpeedY = 0;
+	}
+
+	private async onPlantDragEnd() {
+		this.stopAutoPan();
+		if (!this.activeDragPlant) return;
+
+		const plantId = this.activeDragPlant.id;
+		const finalPlant = this.plants().find(p => p.id === plantId);
+		this.dragSnapPreview.set(null);
+
+		if (finalPlant && finalPlant.id && this.hasDraggedPlant) {
+			const snapped = this.snapToGrid(finalPlant.position_x, finalPlant.position_y);
+			const isOccupied = this.isNodeOccupied(snapped.x, snapped.y, plantId);
+
+			if (isOccupied) {
+				const revertedPlants = this.plants().map(p => {
+					if (p.id === plantId) {
+						return { ...p, position_x: this.initialPlantX, position_y: this.initialPlantY };
+					}
+					return p;
+				});
+				this.plants.set(revertedPlants);
+				this.showToast("Punto del reticolo già occupato da un'altra pianta", "info");
+			} else {
+				const updatedPlants = this.plants().map(p => {
+					if (p.id === plantId) {
+						return { ...p, position_x: snapped.x, position_y: snapped.y };
+					}
+					return p;
+				});
+				this.plants.set(updatedPlants);
+
+				try {
+					await this.plantsService.updatePlant(finalPlant.id, {
+						position_x: snapped.x,
+						position_y: snapped.y
+					});
+					this.showToast("Pianta agganciata al reticolo", "success");
+				} catch (error) {
+					console.error(error);
+					this.showToast("Impossibile salvare la posizione", "error");
+					const revertedPlants = this.plants().map(p => {
+						if (p.id === plantId) {
+							return { ...p, position_x: this.initialPlantX, position_y: this.initialPlantY };
+						}
+						return p;
+					});
+					this.plants.set(revertedPlants);
+				}
+			}
+		}
+
+		this.activeDragPlant = null;
+		setTimeout(() => {
+			this.hasDraggedPlant = false;
+		}, 100);
 	}
 
 	toggleSelection(plant: Plant, event?: Event) {
@@ -1750,7 +2261,7 @@ export class LandComponent implements OnInit, OnDestroy {
 			event.stopPropagation();
 			event.preventDefault();
 		}
-		if (this.hasDragged) {
+		if (this.hasPannedMap || this.hasDraggedPlant) {
 			return;
 		}
 		if (!plant.id) return;
@@ -2053,135 +2564,5 @@ export class LandComponent implements OnInit, OnDestroy {
 		setTimeout(() => {
 			this.toast.set(null);
 		}, 3000);
-	}
-
-	onDragStart(event: MouseEvent | TouchEvent, plant: Plant) {
-		if (this.interactionMode() !== 'move') return;
-		event.stopPropagation();
-		this.activeDragPlant = plant;
-		this.hasDragged = false;
-
-		const clientX = event instanceof MouseEvent ? event.clientX : event.touches[0].clientX;
-		const clientY = event instanceof MouseEvent ? event.clientY : event.touches[0].clientY;
-
-		this.dragStartX = clientX;
-		this.dragStartY = clientY;
-		this.initialPlantX = plant.position_x;
-		this.initialPlantY = plant.position_y;
-
-		const moveHandler = (moveEvent: MouseEvent | TouchEvent) => {
-			this.onDragging(moveEvent);
-		};
-
-		const endHandler = () => {
-			this.onDragEnd();
-			document.removeEventListener("mousemove", moveHandler);
-			document.removeEventListener("mouseup", endHandler);
-			document.removeEventListener("touchmove", moveHandler);
-			document.removeEventListener("touchend", endHandler);
-		};
-
-		document.addEventListener("mousemove", moveHandler, { passive: false });
-		document.addEventListener("mouseup", endHandler);
-		document.addEventListener("touchmove", moveHandler, { passive: false });
-		document.addEventListener("touchend", endHandler);
-	}
-
-	private onDragging(event: MouseEvent | TouchEvent) {
-		if (!this.activeDragPlant) return;
-
-		const clientX = event instanceof MouseEvent ? event.clientX : event.touches[0].clientX;
-		const clientY = event instanceof MouseEvent ? event.clientY : event.touches[0].clientY;
-
-		const deltaX = clientX - this.dragStartX;
-		const deltaY = clientY - this.dragStartY;
-
-		if (Math.abs(deltaX) > 3 || Math.abs(deltaY) > 3) {
-			this.hasDragged = true;
-		}
-
-		const container = document.querySelector(".map-container");
-		if (!container) return;
-
-		const rect = container.getBoundingClientRect();
-		const deltaPctX = (deltaX / rect.width) * 100;
-		const deltaPctY = (deltaY / rect.height) * 100;
-
-		let newX = this.initialPlantX + deltaPctX;
-		let newY = this.initialPlantY + deltaPctY;
-
-		newX = Math.max(5, Math.min(95, newX));
-		newY = Math.max(5, Math.min(95, newY));
-
-		const updatedPlants = this.plants().map(p => {
-			if (p.id === this.activeDragPlant!.id) {
-				return { ...p, position_x: parseFloat(newX.toFixed(2)), position_y: parseFloat(newY.toFixed(2)) };
-			}
-			return p;
-		});
-		this.plants.set(updatedPlants);
-
-		if (event.cancelable) {
-			event.preventDefault();
-		}
-	}
-
-	private async onDragEnd() {
-		if (!this.activeDragPlant) return;
-
-		const plantId = this.activeDragPlant.id;
-		const finalPlant = this.plants().find(p => p.id === plantId);
-
-		if (finalPlant && finalPlant.id && this.hasDragged) {
-			// Calcola lo snap magnetico al punto del reticolo più vicino
-			const snapped = this.snapToGrid(finalPlant.position_x, finalPlant.position_y);
-
-			// Controlla se il nodo è già occupato da un'altra pianta
-			const isOccupied = this.isNodeOccupied(snapped.x, snapped.y, plantId);
-
-			if (isOccupied) {
-				// Ripristina alla posizione di partenza se lo slot del reticolo è già preso
-				const revertedPlants = this.plants().map(p => {
-					if (p.id === plantId) {
-						return { ...p, position_x: this.initialPlantX, position_y: this.initialPlantY };
-					}
-					return p;
-				});
-				this.plants.set(revertedPlants);
-				this.showToast("Punto del reticolo già occupato da un'altra pianta", "info");
-			} else {
-				// Assegna e salva la coordinata esatta del reticolo
-				const updatedPlants = this.plants().map(p => {
-					if (p.id === plantId) {
-						return { ...p, position_x: snapped.x, position_y: snapped.y };
-					}
-					return p;
-				});
-				this.plants.set(updatedPlants);
-
-				try {
-					await this.plantsService.updatePlant(finalPlant.id, {
-						position_x: snapped.x,
-						position_y: snapped.y
-					});
-					this.showToast("Pianta agganciata al reticolo", "success");
-				} catch (error) {
-					console.error(error);
-					this.showToast("Impossibile salvare la posizione", "error");
-					const revertedPlants = this.plants().map(p => {
-						if (p.id === plantId) {
-							return { ...p, position_x: this.initialPlantX, position_y: this.initialPlantY };
-						}
-						return p;
-					});
-					this.plants.set(revertedPlants);
-				}
-			}
-		}
-
-		this.activeDragPlant = null;
-		setTimeout(() => {
-			this.hasDragged = false;
-		}, 100);
 	}
 }
