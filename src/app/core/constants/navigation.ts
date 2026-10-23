@@ -11,8 +11,6 @@ export interface NavSection {
 	base: string;
 	link: string;
 	children?: SectionTab[];
-	/** Etichetta breve per la bottom bar mobile. */
-	short?: string;
 }
 
 export const JOURNAL_TABS: SectionTab[] = [
@@ -36,15 +34,12 @@ export const HARVEST_TABS: SectionTab[] = [
 ];
 
 export const NAV_SECTIONS: NavSection[] = [
-	{ label: "Diario del contadino", short: "Diario", icon: "📔", base: "/journal", link: "/journal/home", children: JOURNAL_TABS },
-	{ label: "Calendario", short: "Agenda", icon: "📅", base: "/calendar", link: "/calendar" },
-	{ label: "Terreno", short: "Terreno", icon: "🌳", base: "/land", link: "/land/map", children: LAND_TABS },
-	{ label: "Manutenzioni e trattamenti", short: "Interventi", icon: "🧪", base: "/operations", link: "/operations/map", children: OPERATIONS_TABS },
-	{ label: "Raccolta", short: "Raccolta", icon: "🫒", base: "/harvest", link: "/harvest/map", children: HARVEST_TABS },
+	{ label: "Diario del contadino", icon: "📔", base: "/journal", link: "/journal/home", children: JOURNAL_TABS },
+	{ label: "Calendario", icon: "📅", base: "/calendar", link: "/calendar" },
+	{ label: "Terreno", icon: "🌳", base: "/land", link: "/land/map", children: LAND_TABS },
+	{ label: "Manutenzioni e trattamenti", icon: "🧪", base: "/operations", link: "/operations/map", children: OPERATIONS_TABS },
+	{ label: "Raccolta", icon: "🫒", base: "/harvest", link: "/harvest/map", children: HARVEST_TABS },
 	{ label: "Contabilità", icon: "💶", base: "/accounting", link: "/accounting" },
 	{ label: "Meteo", icon: "⛅", base: "/meteo", link: "/meteo" },
 	{ label: "Galleria", icon: "🖼️", base: "/gallery", link: "/gallery" }
 ];
-
-/** Voci mostrate nella bottom bar mobile (le altre sono nel menù laterale). */
-export const MOBILE_NAV = ["/journal", "/calendar", "/land", "/operations", "/harvest"];

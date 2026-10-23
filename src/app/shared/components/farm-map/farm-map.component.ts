@@ -104,14 +104,14 @@ const MAX_ZOOM = 4;
 						<rect width="100%" height="100%" [attr.fill]="'url(#' + patternId + ')'" />
 
 						@if (mode() === "move") {
-							@for (x of colLines; track x) {
-								<line [attr.x1]="x + '%'" y1="7%" [attr.x2]="x + '%'" y2="95%" stroke="#964f26" stroke-width="1.2" stroke-dasharray="3 3" opacity="0.35" />
+							@for (col of colLines; track col.pos) {
+								<line [attr.x1]="col.pos + '%'" y1="7%" [attr.x2]="col.pos + '%'" y2="95%" stroke="#964f26" [attr.stroke-width]="col.major ? 1.2 : 0.7" [attr.stroke-dasharray]="col.major ? '3 3' : '2 4'" [attr.opacity]="col.major ? 0.35 : 0.2" />
 							}
-							@for (y of rowLines; track y) {
-								<line x1="5%" [attr.y1]="y + '%'" x2="95%" [attr.y2]="y + '%'" stroke="#964f26" stroke-width="1.2" stroke-dasharray="3 3" opacity="0.35" />
+							@for (row of rowLines; track row.pos) {
+								<line x1="5%" [attr.y1]="row.pos + '%'" x2="95%" [attr.y2]="row.pos + '%'" stroke="#964f26" [attr.stroke-width]="row.major ? 1.2 : 0.7" [attr.stroke-dasharray]="row.major ? '3 3' : '2 4'" [attr.opacity]="row.major ? 0.35 : 0.2" />
 							}
 							@for (node of gridNodes; track node.x + "-" + node.y) {
-								<circle [attr.cx]="node.x + '%'" [attr.cy]="node.y + '%'" r="2.5" fill="#964f26" opacity="0.4" />
+								<circle [attr.cx]="node.x + '%'" [attr.cy]="node.y + '%'" [attr.r]="node.major ? 2.5 : 1.6" fill="#964f26" [attr.opacity]="node.major ? 0.4 : 0.28" />
 							}
 							@if (snapPreview(); as target) {
 								<circle [attr.cx]="target.x + '%'" [attr.cy]="target.y + '%'" r="14" [attr.fill]="target.occupied ? 'rgba(239,68,68,0.22)' : 'rgba(138,171,143,0.35)'" [attr.stroke]="target.occupied ? '#dc2626' : '#4a6741'" stroke-width="2" stroke-dasharray="3 3" />
@@ -188,7 +188,7 @@ const MAX_ZOOM = 4;
 		<!-- Popup mobile: bottom sheet -->
 		@if (popupPlant(); as pp) {
 			@if (isMobile() && popupTemplate()) {
-				<div class="fixed inset-x-3 bottom-[calc(4.5rem+env(safe-area-inset-bottom,0px))] z-[96] bg-white rounded-2xl shadow-camp-xl border border-camp-sand/60 overflow-hidden animate-slide-up max-h-[65vh] overflow-y-auto">
+				<div class="fixed inset-x-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom,0px))] z-[96] bg-white rounded-2xl shadow-camp-xl border border-camp-sand/60 overflow-hidden animate-slide-up max-h-[65vh] overflow-y-auto">
 					<ng-container *ngTemplateOutlet="popupTemplate()!; context: { $implicit: pp, close: closeFn }"></ng-container>
 				</div>
 			}

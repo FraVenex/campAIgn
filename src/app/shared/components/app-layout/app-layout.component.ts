@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed } from "@angular/core";
+import { Component, HostListener, effect, inject, signal, computed, untracked } from "@angular/core";
 import { NgTemplateOutlet } from "@angular/common";
 import { RouterLink, RouterLinkActive, Router, NavigationEnd } from "@angular/router";
 import { toSignal } from "@angular/core/rxjs-interop";
@@ -7,7 +7,7 @@ import { AuthService } from "../../../core/services/auth.service";
 import { ArnaldoChatComponent } from "../arnaldo-chat/arnaldo-chat.component";
 import { CampDialogComponent } from "../camp-dialog/camp-dialog.component";
 import { ToastHostComponent } from "../toast-host/toast-host.component";
-import { MOBILE_NAV, NAV_SECTIONS, NavSection } from "../../../core/constants/navigation";
+import { NAV_SECTIONS, NavSection } from "../../../core/constants/navigation";
 
 /**
  * Layout applicativo: menù laterale a sezioni con sotto-menù, header, bottom bar mobile,
@@ -51,13 +51,13 @@ import { MOBILE_NAV, NAV_SECTIONS, NavSection } from "../../../core/constants/na
 					</div>
 				</header>
 
-				<main class="flex-1 p-3.5 sm:p-6 lg:p-10 pb-28 lg:pb-12 pl-safe pr-safe">
+				<main class="flex-1 p-3.5 sm:p-6 lg:p-10 pb-24 lg:pb-12 pl-safe pr-safe">
 					<ng-content></ng-content>
 				</main>
 			</div>
 
 			@if (mobileMenuOpen()) {
-				<div class="fixed inset-0 bg-camp-earth/25 backdrop-blur-sm z-[60] lg:hidden" (click)="mobileMenuOpen.set(false)">
+				<div class="fixed inset-0 bg-camp-earth/25 backdrop-blur-sm z-[98] lg:hidden" (click)="mobileMenuOpen.set(false)">
 					<div class="w-72 max-w-[85vw] h-full bg-white px-4 py-6 shadow-2xl animate-slide-right flex flex-col overflow-y-auto" (click)="$event.stopPropagation()">
 						<div class="flex items-center justify-between mb-6 px-2">
 							<div class="flex items-center gap-2">
@@ -119,21 +119,6 @@ import { MOBILE_NAV, NAV_SECTIONS, NavSection } from "../../../core/constants/na
 				</app-camp-dialog>
 			}
 
-			<!-- Bottom navigation mobile -->
-			<nav class="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-camp-sand/50 shadow-camp-lg pb-safe" aria-label="Navigazione rapida">
-				<div class="flex items-stretch justify-around px-1 py-1">
-					@for (section of mobileSections; track section.base) {
-						<a [routerLink]="section.link" class="flex flex-col items-center justify-center flex-1 py-1.5 transition-colors text-center" [class.text-camp-sage]="isActive(section)" [class.font-bold]="isActive(section)" [class.text-camp-olive]="!isActive(section)">
-							<span class="text-lg leading-none">{{ section.icon }}</span>
-							<span class="text-[10px] tracking-tight mt-1">{{ section.short || section.label }}</span>
-						</a>
-					}
-					<button type="button" (click)="mobileMenuOpen.set(true)" class="flex flex-col items-center justify-center flex-1 py-1.5 text-center" [class.text-camp-sage]="isInMoreSection()" [class.text-camp-olive]="!isInMoreSection()">
-						<span class="text-lg leading-none">☰</span>
-						<span class="text-[10px] tracking-tight mt-1">Altro</span>
-					</button>
-				</div>
-			</nav>
 		</div>
 	`
 })
@@ -142,7 +127,6 @@ export class AppLayoutComponent {
 	private router = inject(Router);
 
 	readonly sections = NAV_SECTIONS;
-	readonly mobileSections = NAV_SECTIONS.filter(s => MOBILE_NAV.includes(s.base));
 	readonly mobileMenuOpen = signal(false);
 	readonly showLogoutConfirm = signal(false);
 
@@ -155,12 +139,21 @@ export class AppLayoutComponent {
 	);
 
 	readonly activeSection = computed(() => this.sections.find(s => this.url().startsWith(s.base)) ?? null);
-	readonly isInMoreSection = computed(() => {
-		const active = this.activeSection();
-		return !!active && !MOBILE_NAV.includes(active.base);
-	});
 	readonly displayName = this.authService.displayName;
 	readonly userInitials = computed(() => this.authService.displayName().substring(0, 1).toUpperCase() || "U");
+
+	constructor() {
+		// Il menù laterale su mobile si richiude da solo a ogni cambio di pagina
+		effect(() => {
+			this.url();
+			untracked(() => this.mobileMenuOpen.set(false));
+		});
+	}
+
+	@HostListener("window:keydown.escape")
+	closeMenuOnEscape() {
+		this.mobileMenuOpen.set(false);
+	}
 
 	isActive(section: NavSection): boolean {
 		return this.activeSection()?.base === section.base;

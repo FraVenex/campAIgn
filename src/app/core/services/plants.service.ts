@@ -3,6 +3,7 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import { SupabaseService } from "./supabase.service";
 import { AuthService } from "./auth.service";
 import { TableRepository, isColumnMissingError } from "./table-repository";
+import { GRID_X_MIN, GRID_Y_MIN, PLANT_X_SPACING, PLANT_Y_SPACING } from "../utils/farm-grid";
 
 export interface Plant {
 	id?: string;
@@ -99,10 +100,10 @@ export class PlantsService {
 		const plants: Omit<Plant, "user_id">[] = [];
 		const gridCols = 16;
 		const gridRows = 12;
-		const xMin = 5;
-		const xStep = 6;
-		const yMin = 7;
-		const yStep = 8;
+		const xMin = GRID_X_MIN;
+		const xStep = PLANT_X_SPACING;
+		const yMin = GRID_Y_MIN;
+		const yStep = PLANT_Y_SPACING;
 
 		// Se le piante sono poche rispetto al campo, distanzia i filari
 		const colStride = count <= 48 ? 2 : 1;

@@ -327,7 +327,7 @@ const REPORT_PROMPTS: Partial<Record<ArnaldoPageContext, string>> = {
 			</div>
 		}
 
-		<div class="fixed bottom-20 right-4 lg:bottom-6 lg:right-6 z-[95] font-sans" [class.hidden]="isOpen() || !isFabVisible()">
+		<div class="fixed bottom-[calc(1rem+env(safe-area-inset-bottom,0px))] right-4 lg:bottom-6 lg:right-6 z-[95] font-sans" [class.hidden]="isOpen() || !isFabVisible()">
 			<button
 				type="button"
 				(click)="toggleChat()"

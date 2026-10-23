@@ -1,26 +1,22 @@
 import { Component, OnInit, computed, inject, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
-import { RouterLink } from "@angular/router";
 import { PageHeaderComponent } from "../../shared/components/page-header/page-header.component";
+import { PhotoPickerComponent } from "../../shared/components/photo-picker/photo-picker.component";
 import { GalleryUploadDialogComponent } from "./gallery-upload-dialog.component";
 import { GalleryLightboxComponent } from "./gallery-lightbox.component";
 import { Photo, PhotosService } from "../../core/services/photos.service";
-import { FarmStore } from "../../core/services/farm-store.service";
 import { ToastService } from "../../core/services/toast.service";
 import { formatDateIt } from "../../core/constants/domain";
-
-/** "all" = tutte, "general" = senza pianta, altrimenti id della pianta. */
-type GalleryFilter = "all" | "general" | string;
 
 @Component({
 	selector: "app-gallery",
 	standalone: true,
-	imports: [FormsModule, RouterLink, PageHeaderComponent, GalleryUploadDialogComponent, GalleryLightboxComponent],
+	imports: [FormsModule, PageHeaderComponent, PhotoPickerComponent, GalleryUploadDialogComponent, GalleryLightboxComponent],
 	template: `
 		<div class="max-w-7xl mx-auto animate-fade-in space-y-6 relative" (dragenter)="onDragEnter($event)" (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)" (drop)="onDrop($event)">
-			<app-page-header section="Galleria" title="Galleria foto" description="Le foto del terreno e delle singole piante, con le tue didascalie. Trascina qui le immagini per caricarle.">
+			<app-page-header section="Galleria" title="Galleria foto" description="Le tue foto del terreno e del lavoro in campo, con le didascalie. Le foto delle singole piante sono nella loro scheda.">
 				<ng-container actions>
-					<button type="button" (click)="fileInput.click()" class="btn btn-primary">Carica foto</button>
+					<app-photo-picker (picked)="stage($event)" />
 				</ng-container>
 			</app-page-header>
 			<input #fileInput type="file" accept="image/*" multiple class="hidden" (change)="onFilesPicked($event)" />
@@ -32,35 +28,17 @@ type GalleryFilter = "all" | "general" | string;
 				</div>
 			}
 
-			<!-- Filtri -->
+			<!-- Ricerca -->
 			<section class="camp-card p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center gap-3">
-				<div class="segmented w-full sm:w-fit" role="group" aria-label="Filtra foto">
-					<button type="button" (click)="filter.set('all')" class="segmented-item flex-1 sm:flex-none" [class.is-active]="filter() === 'all'" [attr.aria-pressed]="filter() === 'all'">
-						Tutte <span class="text-xs opacity-70">{{ photos.photos().length }}</span>
-					</button>
-					<button type="button" (click)="filter.set('general')" class="segmented-item flex-1 sm:flex-none" [class.is-active]="filter() === 'general'" [attr.aria-pressed]="filter() === 'general'">
-						Generali <span class="text-xs opacity-70">{{ generalCount() }}</span>
-					</button>
-				</div>
-				<div class="flex items-center gap-2 flex-1 sm:max-w-xs">
-					<label for="gallery-plant" class="eyebrow shrink-0">Pianta</label>
-					<select
-						id="gallery-plant"
-						[ngModel]="isPlantFilter() ? filter() : ''"
-						(ngModelChange)="filter.set($event || 'all')"
-						class="camp-input-sm flex-1 min-w-0 cursor-pointer"
-						[class.border-camp-sage]="isPlantFilter()"
-						[class.font-semibold]="isPlantFilter()"
-					>
-						<option value="">Tutte le piante…</option>
-						@for (p of plantOptions(); track p.id) {
-							<option [value]="p.id">{{ p.name }} ({{ p.count }})</option>
-						}
-					</select>
-				</div>
-				@if (isPlantFilter()) {
-					<a [routerLink]="['/land/plant', filter()]" class="btn btn-ghost btn-sm sm:ml-auto">Apri scheda pianta →</a>
-				}
+				<input
+					type="search"
+					[ngModel]="search()"
+					(ngModelChange)="search.set($event)"
+					placeholder="Cerca nelle didascalie…"
+					aria-label="Cerca nelle didascalie"
+					class="camp-input-sm sm:max-w-sm"
+				/>
+				<p class="text-muted sm:ml-auto">{{ galleryPhotos().length }} foto nella galleria</p>
 			</section>
 
 			@if (!photos.loaded()) {
@@ -72,8 +50,8 @@ type GalleryFilter = "all" | "general" | string;
 			} @else if (!filtered().length) {
 				<button type="button" (click)="fileInput.click()" class="w-full camp-card empty-state border-2 border-dashed border-camp-sand sm:py-14 hover:border-camp-sage/50 hover:bg-camp-cream/30 transition-all cursor-pointer">
 					<span class="empty-state-icon">🖼️</span>
-					<p class="text-camp-earth font-semibold">{{ photos.photos().length ? "Nessuna foto per questo filtro" : "Ancora nessuna foto" }}</p>
-					<p class="text-muted">Tocca per scegliere le immagini oppure trascinale qui.</p>
+					<p class="text-camp-earth font-semibold">{{ galleryPhotos().length ? "Nessuna foto corrisponde alla ricerca" : "Ancora nessuna foto" }}</p>
+					<p class="text-muted">Scatta una foto o scegli le immagini dal telefono; dal computer puoi anche trascinarle qui.</p>
 				</button>
 			} @else {
 				<div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5">
@@ -86,9 +64,6 @@ type GalleryFilter = "all" | "general" | string;
 								}
 							</button>
 							<figcaption class="p-3 flex-1 flex flex-col gap-1.5">
-								@if (p.plant_id) {
-									<a [routerLink]="['/land/plant', p.plant_id]" class="self-start max-w-full truncate px-2 py-0.5 rounded-full bg-camp-sage/10 text-camp-sage border border-camp-sage/20 text-[10px] font-bold uppercase tracking-wider hover:bg-camp-sage/20">🌳 {{ plantName(p.plant_id) }}</a>
-								}
 								<p class="text-xs text-camp-earth leading-snug line-clamp-2" [class.italic]="!p.caption" [class.text-camp-olive]="!p.caption">{{ p.caption || "Senza didascalia" }}</p>
 								<p class="text-[10px] text-camp-olive mt-auto">{{ date(p.created_at) }}</p>
 							</figcaption>
@@ -107,7 +82,7 @@ type GalleryFilter = "all" | "general" | string;
 			}
 
 			@if (staged(); as files) {
-				<app-gallery-upload-dialog [files]="files" [plants]="sortedPlants()" [defaultPlantId]="isPlantFilter() ? filter() : null" (close)="staged.set(null)" />
+				<app-gallery-upload-dialog [files]="files" (close)="staged.set(null)" />
 			}
 
 			@if (lightboxIndex() !== null) {
@@ -118,40 +93,24 @@ type GalleryFilter = "all" | "general" | string;
 })
 export class GalleryComponent implements OnInit {
 	readonly photos = inject(PhotosService);
-	private farmStore = inject(FarmStore);
 	private toast = inject(ToastService);
 
-	readonly filter = signal<GalleryFilter>("all");
+	readonly search = signal("");
 	readonly staged = signal<File[] | null>(null);
 	readonly lightboxIndex = signal<number | null>(null);
 	readonly dragging = signal(false);
 	private dragDepth = 0;
 
-	readonly isPlantFilter = computed(() => this.filter() !== "all" && this.filter() !== "general");
-	readonly generalCount = computed(() => this.photos.photos().filter(p => !p.plant_id).length);
-
-	readonly sortedPlants = computed(() => [...this.farmStore.plants()].sort((a, b) => a.name.localeCompare(b.name, "it", { numeric: true })));
-
-	/** Piante con almeno una foto in cima, poi le altre (utile per trovare subito le schede documentate). */
-	readonly plantOptions = computed(() => {
-		const counts = new Map<string, number>();
-		for (const p of this.photos.photos()) if (p.plant_id) counts.set(p.plant_id, (counts.get(p.plant_id) || 0) + 1);
-		return this.sortedPlants()
-			.map(p => ({ id: p.id!, name: p.name, count: counts.get(p.id!) || 0 }))
-			.sort((a, b) => Number(b.count > 0) - Number(a.count > 0));
-	});
+	/** La galleria raccoglie le foto dell'agricoltore; le foto delle piante vivono nella scheda pianta. */
+	readonly galleryPhotos = computed<Photo[]>(() => this.photos.photos().filter(p => !p.plant_id));
 
 	readonly filtered = computed<Photo[]>(() => {
-		const f = this.filter();
-		const list = this.photos.photos();
-		if (f === "all") return list;
-		if (f === "general") return list.filter(p => !p.plant_id);
-		return list.filter(p => p.plant_id === f);
+		const q = this.search().toLowerCase().trim();
+		return q ? this.galleryPhotos().filter(p => (p.caption || "").toLowerCase().includes(q)) : this.galleryPhotos();
 	});
 
 	ngOnInit() {
 		this.photos.load();
-		this.farmStore.ensureLoaded();
 	}
 
 	openAt(index: number) {
@@ -191,13 +150,9 @@ export class GalleryComponent implements OnInit {
 		this.stage(Array.from(e.dataTransfer?.files || []));
 	}
 
-	plantName(id: string): string {
-		return this.farmStore.getPlant(id)?.name || "Pianta";
-	}
-
 	date = (v?: string | null) => formatDateIt(v);
 
-	private stage(files: File[]) {
+	stage(files: File[]) {
 		const images = files.filter(f => f.type.startsWith("image/"));
 		if (!images.length) {
 			if (files.length) this.toast.error("Seleziona solo file immagine (JPG, PNG, HEIC…)");

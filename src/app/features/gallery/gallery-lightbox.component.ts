@@ -1,10 +1,8 @@
 import { Component, HostListener, OnDestroy, OnInit, computed, effect, inject, input, output, signal, untracked } from "@angular/core";
 import { FormsModule } from "@angular/forms";
-import { RouterLink } from "@angular/router";
 import { ConfirmDialogComponent } from "../../shared/components/confirm-dialog/confirm-dialog.component";
 import { ChipComponent } from "../../shared/components/chip/chip.component";
 import { Photo, PhotosService } from "../../core/services/photos.service";
-import { FarmStore } from "../../core/services/farm-store.service";
 import { ToastService } from "../../core/services/toast.service";
 import { formatDateIt } from "../../core/constants/domain";
 
@@ -12,7 +10,7 @@ import { formatDateIt } from "../../core/constants/domain";
 @Component({
 	selector: "app-gallery-lightbox",
 	standalone: true,
-	imports: [FormsModule, RouterLink, ConfirmDialogComponent, ChipComponent],
+	imports: [FormsModule, ConfirmDialogComponent, ChipComponent],
 	template: `
 		<div class="fixed inset-0 z-[90] bg-camp-earth/95 backdrop-blur-sm flex flex-col animate-fade-in" role="dialog" aria-modal="true" aria-label="Visualizzatore foto">
 			@if (photo(); as p) {
@@ -40,11 +38,6 @@ import { formatDateIt } from "../../core/constants/domain";
 					<div class="max-w-3xl mx-auto bg-white rounded-2xl p-3 sm:p-4 mb-3 shadow-xl">
 						<div class="flex flex-wrap items-center gap-2 mb-2 text-xs text-camp-olive">
 							<span>📅 {{ date(p.created_at) }}</span>
-							@if (p.plant_id) {
-								<a [routerLink]="['/land/plant', p.plant_id]" (click)="close.emit()" class="px-2 py-0.5 rounded-full bg-camp-sage/10 text-camp-sage border border-camp-sage/20 text-[10px] font-bold uppercase tracking-wider hover:bg-camp-sage/20">🌳 {{ plantName(p.plant_id) }}</a>
-							} @else {
-								<app-chip label="Generale" tone="neutral" icon="📁" />
-							}
 							@if (p.isLocal) {
 								<span title="Salvata solo su questo dispositivo"><app-chip label="Locale" tone="warning" icon="💾" /></span>
 							}
@@ -84,7 +77,6 @@ import { formatDateIt } from "../../core/constants/domain";
 })
 export class GalleryLightboxComponent implements OnInit, OnDestroy {
 	private photosService = inject(PhotosService);
-	private farmStore = inject(FarmStore);
 	private toast = inject(ToastService);
 
 	readonly photos = input.required<Photo[]>();
@@ -197,10 +189,6 @@ export class GalleryLightboxComponent implements OnInit, OnDestroy {
 			console.error("[Gallery]", err);
 			this.toast.error("Impossibile eliminare la foto");
 		}
-	}
-
-	plantName(id: string): string {
-		return this.farmStore.getPlant(id)?.name || "Pianta";
 	}
 
 	date = (v?: string | null) => formatDateIt(v, { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" });

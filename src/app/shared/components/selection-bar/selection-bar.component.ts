@@ -12,7 +12,7 @@ import { ArnaldoService } from "../../../core/services/arnaldo.service";
 	template: `
 		@if (count() > 0) {
 			<div
-				class="fixed z-[45] inset-x-3 bottom-[calc(4.5rem+env(safe-area-inset-bottom,0px))] lg:inset-x-auto lg:left-[calc(50%+8rem)] lg:-translate-x-1/2 lg:bottom-6 bg-camp-earth/95 text-white rounded-2xl shadow-camp-xl border border-white/10 backdrop-blur px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-3 animate-slide-up lg:max-w-3xl"
+				class="fixed z-[45] inset-x-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom,0px))] lg:inset-x-auto lg:left-[calc(50%+8rem)] lg:-translate-x-1/2 lg:bottom-6 bg-camp-earth/95 text-white rounded-2xl shadow-camp-xl border border-white/10 backdrop-blur px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-3 animate-slide-up lg:max-w-3xl"
 			>
 				<div class="flex items-center justify-between gap-3 sm:pr-4 sm:border-r border-white/10">
 					<div class="flex items-center gap-2.5">

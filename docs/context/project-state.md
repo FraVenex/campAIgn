@@ -16,7 +16,7 @@
 - **Arnaldo AI Assistant**: Riprogettazione completa UI/UX e personalizzazione della voce: ora risponde con l'anima di **nonno Arnaldo**, un uomo saggio che ha lavorato tutta la vita con le mani nella terra, parla con gli ulivi e vuole tramandare la sua eredità rurale con calore e schiettezza, senza mai essere sdolcinato. Dialog modale moderno per mobile, avatar illustrato 512x512 ad alta risoluzione (`assets/Arnaldo.jpg`), temperatura aumentata a 0.4 per risposte più fluide e naturali e suggerimenti rapidi contestuali.
 - **Calendario Mobile (UX Apple Calendar)**: Riprogettazione radicale dell'esperienza mobile del Calendario. Eliminata la griglia mensile compressa illeggibile; introdotto il pattern Mini-Mese touch-friendly (giorni circolari ergonomici, dot indicatori di eventi) abbinato all'Agenda del giorno selezionato subito sotto con card dettagliate e pulsante rapido `+ Aggiungi`.
 - **Design System**: Refactor completo. Rimozione DaisyUI, palette camp/ estesa con tokens semantici (ombre, radius, animazioni). Classi utility camp-* (input, btn, card, alert, glass).
-- **Responsive Mobile & Ergonomia**: Ottimizzazione completa per smartphone (Portrait e Landscape) e tablet. Safe areas (`env(safe-area-inset)`), Bottom Navigation Bar fissa per thumb zone, disattivazione auto-zoom iOS Safari su input (<16px), touch target minimi (36-44px), modali e dialoghi standardizzati al centro dello schermo con margini d'aria e backdrop.
+- **Responsive Mobile & Ergonomia**: Ottimizzazione completa per smartphone (Portrait e Landscape) e tablet. Safe areas (`env(safe-area-inset)`), menù laterale a scomparsa, disattivazione auto-zoom iOS Safari su input (<16px), touch target minimi (36-44px), modali e dialoghi standardizzati al centro dello schermo con margini d'aria e backdrop.
 - **Auth Flow**: Redesign completo Login/Register con glassmorphism, accessibilità (label+id, autocomplete, aria-label), redirect intelligente post-login basato su onboarding_completed.
 - **Routing / State Machine**: Guard system riscritto — guestGuard (login/register), onboardingGuard, appGuard. Naming coerente, logica centralizzata senza ambiguità.
 - **Onboarding**: Finalizzato con Step 3 per disposizione (Regolare/Irregolare), inserimento manuale piante e persistenza sulla tabella `farms`.
@@ -25,7 +25,7 @@
 ## Cosa Esiste
 - [x] Design system camp/ con Tailwind tokens e classi component-level
 - [x] Responsive Design Multi-Device (Mobile Portrait, Mobile Landscape, Tablet, Desktop)
-  - Bottom Navigation Bar mobile con navigazione rapida (Home, Terreno, Meteo, Agenda, Archivio)
+  - Navigazione mobile tramite menù laterale a scomparsa (pulsante ☰ nell'header), chiuso automaticamente a ogni cambio pagina; nessuna barra inferiore
   - Supporto Notch / Home bar con `viewport-fit=cover` e classi `.pt-safe`, `.pb-safe`
   - Vista Calendario Mobile ergonomica: Mini-Mese circolare + Agenda giorno selezionato (stile Apple Calendar / Fantastical)
   - Vista Agenda nel Calendario per smartphone con card informative e filtri vista

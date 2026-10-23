@@ -11,6 +11,7 @@ import { ConfirmDialogComponent } from "../../../shared/components/confirm-dialo
 import { CampDialogComponent } from "../../../shared/components/camp-dialog/camp-dialog.component";
 import { QuickNoteComponent } from "../../../shared/components/quick-note/quick-note.component";
 import { ChipComponent } from "../../../shared/components/chip/chip.component";
+import { PhotoPickerComponent } from "../../../shared/components/photo-picker/photo-picker.component";
 import { FarmStore } from "../../../core/services/farm-store.service";
 import { OperationsStore } from "../../../core/services/operations.store";
 import { NotesService, Note } from "../../../core/services/notes.service";
@@ -42,7 +43,8 @@ type DeleteTarget = { kind: "plant" } | { kind: "note"; note: Note } | { kind: "
 		ConfirmDialogComponent,
 		CampDialogComponent,
 		QuickNoteComponent,
-		ChipComponent
+		ChipComponent,
+		PhotoPickerComponent
 	],
 	template: `
 		<div class="max-w-7xl mx-auto animate-fade-in space-y-6">
@@ -294,11 +296,10 @@ type DeleteTarget = { kind: "plant" } | { kind: "note"; note: Note } | { kind: "
 							<p class="eyebrow">Galleria</p>
 							<h2 class="section-title">Foto della pianta</h2>
 						</div>
-						<button type="button" (click)="fileInput.click()" class="btn btn-secondary btn-sm">Carica foto</button>
-						<input #fileInput type="file" accept="image/*" multiple class="hidden" (change)="onFiles($event)" />
+						<app-photo-picker [small]="true" (picked)="stage($event)" />
 					</div>
 					<div
-						class="border-2 border-dashed rounded-camp-lg p-5 text-center text-sm text-camp-olive mb-4 transition-colors"
+						class="hidden md:block border-2 border-dashed rounded-camp-lg p-5 text-center text-sm text-camp-olive mb-4 transition-colors"
 						[class]="dragOver() ? 'border-camp-sage bg-camp-cream' : 'border-camp-sand'"
 						(dragover)="$event.preventDefault(); dragOver.set(true)"
 						(dragleave)="dragOver.set(false)"
@@ -568,19 +569,13 @@ export class PlantDetailComponent implements OnInit {
 
 	// ---- Foto ----
 
-	onFiles(event: Event) {
-		const input = event.target as HTMLInputElement;
-		this.stage(Array.from(input.files || []));
-		input.value = "";
-	}
-
 	onDrop(event: DragEvent) {
 		event.preventDefault();
 		this.dragOver.set(false);
 		this.stage(Array.from(event.dataTransfer?.files || []));
 	}
 
-	private stage(files: File[]) {
+	stage(files: File[]) {
 		const images = files.filter(f => f.type.startsWith("image/"));
 		this.staged.update(list => [...list, ...images.map(file => ({ file, preview: URL.createObjectURL(file), caption: "" }))]);
 	}

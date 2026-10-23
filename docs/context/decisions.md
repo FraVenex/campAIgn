@@ -83,3 +83,8 @@
 - **Motivazione**: Le pagine nate in parallelo avevano pulsanti, titoli e colori diversi tra loro; serve coerenza visiva in tutta l'app.
 - **Decisione**: Rimossi i pulsanti "Chiedi ad Arnaldo" dalle pagine: l'assistente è raggiungibile solo dal pulsante flottante, sempre presente e consapevole della pagina corrente.
 - **Sicurezza**: la chiave Gemini vive solo nei secret della Edge Function `arnaldo`, che risponde unicamente a utenti autenticati.
+
+## 2026-10-23 - Solo menù laterale, niente barra inferiore
+- **Decisione**: Rimossa la bottom navigation mobile. Su telefono e tablet si naviga solo con il menù laterale a scomparsa (☰), che mostra sezioni e sotto-menù e si chiude da solo dopo la scelta o con Esc. Pannelli flottanti (popup mappa, barra selezione) e pulsante di Arnaldo ora poggiano sul fondo dello schermo.
+- **Galleria**: contiene solo le foto generali dell'agricoltore; le foto delle piante vivono nella scheda pianta. Su dispositivi touch il caricamento offre "Scatta foto" (fotocamera) e "Dalla galleria" (selezione multipla) tramite `app-photo-picker`.
+- **Reticolo mappa**: passo dimezzato (3% x 4%) per consentire file sfalsate; la distanza standard tra piante resta 6% x 8%.

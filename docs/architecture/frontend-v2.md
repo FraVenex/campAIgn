@@ -16,7 +16,7 @@
 | | `/harvest/archive` | Archivio raccolte con report automatico scaricabile |
 | Contabilità | `/accounting` | Spese |
 | Meteo | `/meteo` | Previsioni 5 giorni e grandezze agronomiche |
-| Galleria | `/gallery` | Foto con didascalie |
+| Galleria | `/gallery` | Foto generali dell'agricoltore con didascalie (le foto delle piante sono nella scheda pianta) |
 
 Tutte le pagine autenticate sono figlie di `AppShellComponent` (layout + `<router-outlet>`), quindi **le pagine non usano più `<app-layout>`**.
 
@@ -39,6 +39,7 @@ Tutte le pagine autenticate sono figlie di `AppShellComponent` (layout + `<route
 - `app-plant-popup-card` + `app-popup-row` – struttura comune del popup (intestazione, nota rapida, link alla scheda).
 - `app-page-header` – titolo pagina + sotto-menù a tab della sezione.
 - `app-selection-bar` – barra azioni per piante selezionate.
+- `app-photo-picker` – "Scatta foto" (fotocamera) + "Dalla galleria" (multipla) su telefono/tablet, "Carica foto" su computer.
 - `app-plant-form-dialog`, `app-operation-form-dialog`, `app-confirm-dialog`, `app-quick-note`, `app-chip`, `app-toast-host`.
 
 ## Costanti e utility (`src/app/core/constants`, `src/app/core/utils`)
