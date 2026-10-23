@@ -1,5 +1,9 @@
-const supabaseUrl = 'https://rlixpechojwaxwazbxcq.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJsaXhwZWNob2p3YXh3YXpieGNxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3Nzg3NTQsImV4cCI6MjA5MjM1NDc1NH0.HZmDXlzgeAyNXic5iO7paN98ffxjUAsRfPk8yjO8CZQ';
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_ANON_KEY;
+if (!supabaseUrl || !supabaseKey) {
+  console.error("Imposta SUPABASE_URL e SUPABASE_ANON_KEY nelle variabili d'ambiente.");
+  process.exit(1);
+}
 
 async function test() {
   try {

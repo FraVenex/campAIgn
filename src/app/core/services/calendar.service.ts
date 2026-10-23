@@ -2,6 +2,10 @@ import { Injectable, inject } from '@angular/core';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { SupabaseService } from './supabase.service';
 import { AuthService } from './auth.service';
+import { isColumnMissingError } from './table-repository';
+import { EventType, WorkStatus } from '../constants/domain';
+
+const EVENT_EXTRAS_KEY = 'camp-extras-events';
 
 export interface CalendarEvent {
   id?: string;
@@ -9,7 +13,7 @@ export interface CalendarEvent {
   farm_id: string;
   title: string;
   description?: string | null;
-  type: 'maintenance' | 'harvest' | 'irrigation' | 'other';
+  type: EventType;
   start: string;
   end: string;
   all_day: boolean;
@@ -21,6 +25,7 @@ export interface CalendarEvent {
   created_at?: string;
   updated_at?: string;
   plant_ids?: string[];
+  work_status?: WorkStatus;
 }
 
 @Injectable({
@@ -47,9 +52,9 @@ export class CalendarService {
     if (!eventsStr) {
       const defaultEvents: CalendarEvent[] = this.createMockEvents();
       localStorage.setItem('camp-calendar-events', JSON.stringify(defaultEvents));
-      return defaultEvents;
+      return this.migrateEvents(defaultEvents);
     }
-    return JSON.parse(eventsStr);
+    return this.migrateEvents(JSON.parse(eventsStr));
   }
 
   private saveFallbackEvents(events: CalendarEvent[]) {
@@ -220,14 +225,23 @@ export class CalendarService {
 
     try {
       const { plant_ids, ...dbEventData } = eventData as any;
-      const { data, error } = await this.supabase
+      let { data, error } = await this.supabase
         .from('events')
         .insert([{ ...dbEventData, user_id: user.id }])
         .select();
 
+      if (error && isColumnMissingError(error) && 'work_status' in dbEventData) {
+        const { work_status, ...withoutStatus } = dbEventData;
+        ({ data, error } = await this.supabase
+          .from('events')
+          .insert([{ ...withoutStatus, user_id: user.id }])
+          .select());
+        if (!error && data?.[0]?.id) this.saveEventExtras(data[0].id, { work_status });
+      }
+
       if (error) throw error;
 
-      const createdEvent = data[0] as CalendarEvent;
+      const createdEvent = this.migrateEvents(data as any[])[0];
       if (plant_ids && plant_ids.length > 0 && createdEvent.id) {
         try {
           const eventPlantsPayload = plant_ids.map((pid: string) => ({
@@ -281,16 +295,29 @@ export class CalendarService {
     }
 
     try {
-      const { data, error } = await this.supabase
+      const { plant_ids, ...dbEventData } = eventData as any;
+      let { data, error } = await this.supabase
         .from('events')
-        .update({ ...eventData, updated_at: new Date().toISOString() })
+        .update({ ...dbEventData, updated_at: new Date().toISOString() })
         .eq('id', id)
         .eq('user_id', user.id)
         .select();
 
+      if (error && isColumnMissingError(error) && 'work_status' in dbEventData) {
+        const { work_status, ...withoutStatus } = dbEventData;
+        this.saveEventExtras(id, { work_status });
+        ({ data, error } = await this.supabase
+          .from('events')
+          .update({ ...withoutStatus, updated_at: new Date().toISOString() })
+          .eq('id', id)
+          .eq('user_id', user.id)
+          .select());
+      }
+
       if (error) throw error;
       if (!data || data.length === 0) throw new Error('Evento non trovato');
-      return data[0] as CalendarEvent;
+      if (plant_ids) await this.replaceEventPlants(id, plant_ids);
+      return this.migrateEvents(data as any[])[0];
     } catch (e: any) {
       if (this.isTableMissingError(e)) {
         this.activateFallback();
@@ -320,9 +347,9 @@ export class CalendarService {
 
       if (error || !data || data.length === 0) return null;
 
-      const events = (data as any[])
+      const events = this.migrateEvents((data as any[])
         .map(row => row.events)
-        .filter(ev => !!ev && !!ev.start)
+        .filter(ev => !!ev && !!ev.start))
         .sort((a, b) => new Date(b.start).getTime() - new Date(a.start).getTime());
 
       if (events.length === 0) return null;
@@ -350,13 +377,11 @@ export class CalendarService {
 
       if (error || !data) return [];
 
-      return (data as any[])
-        .map(row => {
-          const ev = row.events;
-          if (!ev) return null;
-          return { ...ev, plant_ids: [plantId] } as CalendarEvent;
-        })
-        .filter(Boolean) as CalendarEvent[];
+      return this.migrateEvents((data as any[])
+        .map(row => row.events)
+        .filter(Boolean)
+        .map(ev => ({ ...ev, plant_ids: [plantId] })))
+        .sort((a, b) => new Date(b.start).getTime() - new Date(a.start).getTime());
     } catch {
       return [];
     }
@@ -390,16 +415,60 @@ export class CalendarService {
     }
   }
 
+  async setWorkStatus(id: string, workStatus: WorkStatus): Promise<CalendarEvent> {
+    return this.updateEvent(id, { work_status: workStatus });
+  }
+
+  private async replaceEventPlants(eventId: string, plantIds: string[]) {
+    try {
+      await this.supabase.from('event_plants').delete().eq('event_id', eventId);
+      if (plantIds.length) {
+        await this.supabase.from('event_plants').insert(plantIds.map(pid => ({ event_id: eventId, plant_id: pid })));
+      }
+    } catch (err) {
+      console.warn('[CalendarService] Errore aggiornamento relazioni event_plants:', err);
+    }
+  }
+
+  /** Stato operativo: colonna dedicata, extra locali o convenzione legacy nel prefisso della descrizione. */
+  private deriveWorkStatus(e: any, extras: Record<string, any>): WorkStatus {
+    const fromExtras = e.id ? extras[e.id]?.work_status : undefined;
+    if (e.work_status) return e.work_status;
+    if (fromExtras) return fromExtras;
+    const desc: string = e.description || '';
+    if (desc.startsWith('[STATUS:completata')) return 'done';
+    return 'todo';
+  }
+
   private migrateEvents(raw: any[]): CalendarEvent[] {
+    const extras = this.readEventExtras();
     return raw.map(e => {
       const plant_ids = e.event_plants ? e.event_plants.map((ep: any) => ep.plant_id) : [];
+      const { event_plants, ...rest } = e;
       return {
-        ...e,
+        ...rest,
         plant_ids: e.plant_ids || plant_ids,
         source: e.source ?? 'user',
-        status: e.status ?? 'confirmed'
+        status: e.status ?? 'confirmed',
+        work_status: this.deriveWorkStatus(e, extras)
       };
     });
+  }
+
+  private readEventExtras(): Record<string, any> {
+    try {
+      return JSON.parse(localStorage.getItem(EVENT_EXTRAS_KEY) || '{}');
+    } catch {
+      return {};
+    }
+  }
+
+  private saveEventExtras(id: string, extra: Record<string, any>) {
+    const all = this.readEventExtras();
+    all[id] = { ...(all[id] || {}), ...extra };
+    try {
+      localStorage.setItem(EVENT_EXTRAS_KEY, JSON.stringify(all));
+    } catch {}
   }
 
   private activateFallback() {

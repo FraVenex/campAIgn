@@ -67,5 +67,19 @@
     - **Edge Auto-Pan**: Se una pianta viene trascinata vicino al bordo del viewport mentre la mappa è ingrandita, la mappa scorre automaticamente in quella direzione consentendo lo spostamento libero attraverso l'intero terreno.
   - **Disambiguazione Pan vs Tap**: Prevenuta l'apertura accidentale di popup/bottom sheet o la selezione di piante durante le gesture di trascinamento e navigazione della mappa.
 
+## 2026-10-23 - Architettura v2: sezioni operative e componenti condivisi
+- **Decisione**: Riorganizzazione della web app in sezioni con sotto-menù: *Diario del contadino* (Home, Note), *Calendario*, *Terreno* (Mappa, Lista piante), *Manutenzioni e trattamenti* (Mappa, Registro interventi), *Raccolta* (Mappa, Archivio raccolta), *Contabilità*, *Meteo*, *Galleria*. La scheda pianta (`/land/plant/:id`) non è nel menù: si apre da popup mappa o lista piante.
+- **Shell di routing**: tutte le pagine autenticate sono figlie di `AppShellComponent` (layout + `router-outlet`); le pagine non includono più `<app-layout>`. I vecchi percorsi `/dashboard` e `/archive` reindirizzano a `/journal/home` e `/operations/log`.
+- **Mappa unica**: `app-farm-map` concentra gesture, modalità (visualizza/seleziona/sposta), selezione ad area, badge sui marker e gestione popup (ancorato su desktop, bottom sheet su mobile). Ogni pagina fornisce solo il contenuto del popup (`popupTemplate` + `app-plant-popup-card`).
+- **Stato condiviso**: `FarmStore` (piante), `OperationsStore` (attività del calendario con stato operativo), `NotesService`, `HarvestService`, `ExpensesService`, `PhotosService` come store a signals: lista e mappe restano sincronizzate senza ricaricare.
+- **Stato operativo degli interventi**: nuova colonna `events.work_status` (`todo`, `in_progress`, `done`, `skipped`); "in ritardo" è derivato (da svolgere con data passata). Il vecchio prefisso `[STATUS:completata]` nella descrizione viene letto come `done`.
+- **Resilienza del database**: `TableRepository` usa Supabase e, se una tabella o colonna della migrazione v2 non esiste ancora, salva in locale (localStorage) senza bloccare l'utente. Lo stesso vale per le foto se lo Storage non è configurato.
+- **Report**: il report di ogni raccolta è calcolato automaticamente (resa in olio, €/L, confronto 5 anni, voto) e salvato nella riga (`harvests.report`). I report (raccolta, contabilità, Arnaldo) si scaricano come HTML autonomo stampabile in PDF.
+- **Arnaldo onnisciente**: il contesto inviato all'AI include pagina corrente (con descrizione), piante, interventi con stato, note, raccolte con report, contabilità, foto, meteo agronomico (ET0, VPD, suolo, finestre di trattamento, rischi) e fase stagionale; può restituire un `report` markdown scaricabile dalla chat.
 
 
+## 2026-10-23 - UI kit unico e Arnaldo solo flottante
+- **Decisione**: Introdotto un UI kit condiviso (classi in `src/styles.css`, regole in `docs/design/ui-kit.md`): pulsanti `btn` con tre gerarchie e testo in sentence case, `eyebrow`/`section-title` per le intestazioni, `kpi`, `filter-chip`, `segmented`, `camp-input-sm`, `dialog-footer`, `data-table`. Tutte le pagine e i componenti condivisi usano queste classi al posto di combinazioni Tailwind scritte a mano; solo palette `camp-*`.
+- **Motivazione**: Le pagine nate in parallelo avevano pulsanti, titoli e colori diversi tra loro; serve coerenza visiva in tutta l'app.
+- **Decisione**: Rimossi i pulsanti "Chiedi ad Arnaldo" dalle pagine: l'assistente è raggiungibile solo dal pulsante flottante, sempre presente e consapevole della pagina corrente.
+- **Sicurezza**: la chiave Gemini vive solo nei secret della Edge Function `arnaldo`, che risponde unicamente a utenti autenticati.

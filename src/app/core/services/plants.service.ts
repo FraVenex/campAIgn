@@ -2,6 +2,7 @@ import { Injectable, inject } from "@angular/core";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { SupabaseService } from "./supabase.service";
 import { AuthService } from "./auth.service";
+import { TableRepository, isColumnMissingError } from "./table-repository";
 
 export interface Plant {
 	id?: string;
@@ -14,6 +15,9 @@ export interface Plant {
 	status: string;
 	last_treatment_at?: string | null;
 	last_treatment_type?: string | null;
+	variety?: string | null;
+	planting_year?: number | null;
+	description?: string | null;
 	created_at?: string;
 	updated_at?: string;
 }
@@ -26,8 +30,15 @@ export class PlantsService {
 	private authService = inject(AuthService);
 	private supabaseService = inject(SupabaseService);
 
+	private repo: TableRepository<Plant>;
+
 	constructor() {
 		this.supabase = this.supabaseService.client;
+		this.repo = new TableRepository<Plant>(this.supabase, "plants", () => this.authService.currentUser()?.id ?? null, [
+			"variety",
+			"planting_year",
+			"description"
+		]);
 	}
 
 	async getPlantsByFarm(farmId: string): Promise<Plant[]> {
@@ -39,25 +50,11 @@ export class PlantsService {
 		if (error) {
 			throw error;
 		}
-		return data as Plant[];
+		return this.repo.mergeExtras(data as Plant[]);
 	}
 
 	async createPlant(plant: Omit<Plant, "user_id">): Promise<Plant> {
-		const user = this.authService.currentUser();
-		if (!user) {
-			throw new Error("Utente non autenticato");
-		}
-
-		const { data, error } = await this.supabase
-			.from("plants")
-			.insert([{ ...plant, user_id: user.id }])
-			.select()
-			.single();
-
-		if (error) {
-			throw error;
-		}
-		return data as Plant;
+		return this.repo.insert(plant);
 	}
 
 	async createPlants(plants: Omit<Plant, "user_id">[]): Promise<Plant[]> {
@@ -72,6 +69,18 @@ export class PlantsService {
 			.insert(payload)
 			.select();
 
+		if (error && isColumnMissingError(error)) {
+			// Colonne anagrafiche non ancora migrate: salva il nucleo e conserva gli extra in locale
+			const split = payload.map(p => this.repo.splitOptional(p));
+			const retry = await this.supabase
+				.from("plants")
+				.insert(split.map(s => s.core))
+				.select();
+			if (retry.error) throw retry.error;
+			const created = retry.data as Plant[];
+			created.forEach((row, i) => row.id && this.repo.rememberExtras(row.id, split[i].extra));
+			return this.repo.mergeExtras(created);
+		}
 		if (error) {
 			throw error;
 		}
@@ -133,34 +142,29 @@ export class PlantsService {
 		if (error) {
 			throw error;
 		}
-		return data as Plant;
+		return this.repo.mergeExtras([data as Plant])[0];
 	}
 
 	async updatePlant(id: string, updates: Partial<Plant>): Promise<Plant> {
-		const { data, error } = await this.supabase
-			.from("plants")
-			.update(updates)
-			.eq("id", id)
-			.select()
-			.single();
-
-		if (error) {
-			throw error;
-		}
-		return data as Plant;
+		return this.repo.update(id, updates);
 	}
 
 	async updatePlants(ids: string[], updates: Partial<Plant>): Promise<Plant[]> {
-		const { data, error } = await this.supabase
+		let { data, error } = await this.supabase
 			.from("plants")
 			.update(updates)
 			.in("id", ids)
 			.select();
 
+		if (error && isColumnMissingError(error)) {
+			const { core, extra } = this.repo.splitOptional(updates);
+			ids.forEach(id => this.repo.rememberExtras(id, extra));
+			({ data, error } = await this.supabase.from("plants").update(core).in("id", ids).select());
+		}
 		if (error) {
 			throw error;
 		}
-		return data as Plant[];
+		return this.repo.mergeExtras(data as Plant[]);
 	}
 
 	async deletePlants(ids: string[]): Promise<void> {

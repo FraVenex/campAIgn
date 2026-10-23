@@ -25,3 +25,15 @@
 - [x] Setup client Gemini (integrazione mock e routing contestuale).
 - [x] Implementazione assistente contestuale in Dashboard.
 - [x] Logica di prompt per consigli agronomici basati sul meteo.
+
+## Priorità 5: Architettura v2 (2026-10-23)
+- [x] Shell di routing con sezioni e sotto-menù (Diario, Calendario, Terreno, Interventi, Raccolta, Contabilità, Meteo, Galleria).
+- [x] Componente mappa unico `app-farm-map` con popup gestiti e store condivisi.
+- [x] Diario: Home (punto del giorno, meteo agronomico, promemoria, attività di oggi) e bacheca Note.
+- [x] Terreno: Mappa e Lista piante (anagrafica estesa), Scheda pianta con grafici, storico, note e foto.
+- [x] Interventi: Mappa con selezione multipla e badge, Registro con stati operativi.
+- [x] Raccolta: Mappa di programmazione e Archivio con report automatico scaricabile.
+- [x] Contabilità, Meteo 5 giorni, Galleria.
+- [x] Arnaldo: contesto per pagina, memoria completa dei dati, report scaricabili.
+- [ ] Applicare la migrazione `20261023_architecture_v2.sql` e ridistribuire la Edge Function `arnaldo`.
+- [ ] Verifica manuale end-to-end con utente autenticato.

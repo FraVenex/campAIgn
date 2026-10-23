@@ -7,6 +7,38 @@ import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
 import { filter, map } from "rxjs";
 
 import { ArnaldoService, ArnaldoChatMessage, ArnaldoPageContext } from "../../../core/services/arnaldo.service";
+import { ReportExportService, markdownToHtml } from "../../../core/services/report-export.service";
+
+const CONTEXT_QUESTIONS: Partial<Record<ArnaldoPageContext, string[]>> = {
+	"journal-home": ["Nonno, cosa c'è da fare oggi?", "Con il meteo di oggi posso trattare?"],
+	"journal-notes": ["Riassumi le mie note", "C'è qualcosa nelle note che dovrei fare subito?"],
+	calendar: ["Quali sono i prossimi interventi?", "Ci sono attività che il meteo rischia di rovinare?"],
+	"land-map": ["Come vedi la salute del terreno?", "Quali piante hanno bisogno di cure?"],
+	"plant-list": ["Quali piante sono più a rischio?", "Che varietà conviene aggiungere?"],
+	"plant-detail": ["Come sta questa pianta secondo te?", "Che cure le faresti in questo periodo?"],
+	"operations-map": ["Quali piante dovrei trattare adesso?", "Che trattamento consigli per questo periodo?"],
+	"operations-log": ["Quali interventi sono in ritardo?", "Riepiloga i trattamenti di quest'anno"],
+	"harvest-map": ["È il momento giusto per raccogliere?", "Da quali piante comincio la raccolta?"],
+	"harvest-archive": ["Com'è andato il raccolto rispetto agli anni scorsi?", "Come posso migliorare la resa in olio?"],
+	accounting: ["Dove sto spendendo di più?", "Come posso ridurre i costi?"],
+	meteo: ["Con questo meteo possiamo lavorare la terra?", "Servono irrigazioni nei prossimi giorni?"],
+	gallery: ["Cosa noti nelle foto più recenti?", "Che foto mi conviene scattare per monitorare le piante?"],
+	general: ["Nonno, che consigli hai per il nostro uliveto?", "Come possiamo prenderci cura del terreno?"]
+};
+
+const REPORT_PROMPTS: Partial<Record<ArnaldoPageContext, string>> = {
+	"journal-home": "Preparami un report scaricabile sulla situazione di oggi: meteo, attività, rischi e consigli.",
+	"operations-log": "Preparami un report scaricabile su tutti gli interventi: svolti, in ritardo, saltati e da programmare.",
+	"operations-map": "Preparami un report scaricabile sul piano di trattamenti e manutenzioni per le prossime settimane.",
+	"harvest-archive": "Preparami un report scaricabile sull'andamento delle raccolte negli ultimi anni con consigli per migliorare.",
+	"harvest-map": "Preparami un report scaricabile per pianificare la raccolta di quest'anno.",
+	accounting: "Preparami un report scaricabile sulla contabilità: spese per categoria, andamento e suggerimenti di risparmio.",
+	"plant-detail": "Preparami un report scaricabile su questa pianta: anagrafica, salute, storico interventi, note e consigli.",
+	"land-map": "Preparami un report scaricabile sullo stato di salute di tutte le piante del terreno.",
+	"plant-list": "Preparami un report scaricabile con l'anagrafica e lo stato di tutte le piante.",
+	meteo: "Preparami un report agrometeorologico scaricabile per i prossimi 5 giorni con le finestre operative.",
+	general: "Preparami un report generale scaricabile sullo stato dell'azienda agricola."
+};
 
 @Component({
 	selector: "app-arnaldo-chat",
@@ -139,7 +171,7 @@ import { ArnaldoService, ArnaldoChatMessage, ArnaldoPageContext } from "../../..
 													: 'bg-white text-camp-earth border border-camp-sand/50 rounded-2xl rounded-tl-xs px-4 py-3 shadow-xs text-[13.5px] sm:text-sm font-normal'
 										"
 									>
-										<div class="leading-relaxed select-text" [innerHTML]="formatMarkdown(msg.text)"></div>
+										<div class="chat-md leading-relaxed select-text" [innerHTML]="formatMarkdown(msg.text)"></div>
 
 										@if (msg.suggestion) {
 											<div class="mt-3 pt-3 border-t border-camp-sand/30 bg-camp-cream/40 -mx-1 p-3 rounded-xl border border-camp-sand/40 space-y-2.5 shadow-2xs">
@@ -185,6 +217,19 @@ import { ArnaldoService, ArnaldoChatMessage, ArnaldoPageContext } from "../../..
 															Rifiutato
 														</div>
 													}
+												</div>
+											</div>
+										}
+
+										@if (msg.report) {
+											<div class="mt-3 p-3 rounded-xl border border-camp-sage/30 bg-camp-sage/5 space-y-2">
+												<div class="flex items-center gap-2">
+													<span class="text-lg">📄</span>
+													<p class="font-serif font-bold text-xs text-camp-earth leading-tight">{{ msg.report.title }}</p>
+												</div>
+												<div class="flex gap-2">
+													<button type="button" (click)="downloadReport(msg)" class="flex-1 px-3 py-1.5 bg-camp-sage hover:bg-camp-earth text-white text-[11px] font-bold uppercase tracking-wider rounded-lg cursor-pointer">⬇ Scarica</button>
+													<button type="button" (click)="printReport(msg)" class="flex-1 px-3 py-1.5 bg-white hover:bg-camp-cream text-camp-earth border border-camp-sand text-[11px] font-bold uppercase tracking-wider rounded-lg cursor-pointer">🖨 PDF</button>
 												</div>
 											</div>
 										}
@@ -235,6 +280,16 @@ import { ArnaldoService, ArnaldoChatMessage, ArnaldoPageContext } from "../../..
 							(ngSubmit)="sendMessage()"
 							class="flex items-center gap-2"
 						>
+							<button
+								type="button"
+								(click)="requestReport()"
+								[disabled]="isTyping()"
+								title="Chiedi ad Arnaldo un report scaricabile su questa pagina"
+								aria-label="Genera report"
+								class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-camp-cream hover:bg-camp-sand/60 text-camp-earth flex items-center justify-center transition-all shrink-0 disabled:opacity-40 cursor-pointer"
+							>
+								📄
+							</button>
 							<div class="flex-1 relative flex items-center bg-camp-cream/30 border border-camp-sand/70 focus-within:border-camp-sage focus-within:ring-2 focus-within:ring-camp-sage/20 rounded-full transition-all shadow-inner px-3.5 py-1">
 								<input
 									type="text"
@@ -338,6 +393,7 @@ export class ArnaldoChatComponent {
 	private router = inject(Router);
 	private arnaldoService = inject(ArnaldoService);
 	private sanitizer = inject(DomSanitizer);
+	private reportExport = inject(ReportExportService);
 
 	inputText = signal("");
 
@@ -357,14 +413,23 @@ export class ArnaldoChatComponent {
 	);
 
 	routeContext = computed<ArnaldoPageContext>(() => {
-		const url = this.currentUrl();
-		if (url.includes("/dashboard")) return "dashboard";
-		if (url.includes("/meteo")) return "meteo";
-		if (url.includes("/calendar")) return "calendar";
-		if (url.includes("/archive")) return "archive";
-		if (url.includes("/land/plant/")) return "plant-detail";
-		if (url.includes("/land")) return "land";
-		return "general";
+		const url = this.currentUrl().split("?")[0];
+		const routes: [string, ArnaldoPageContext][] = [
+			["/journal/home", "journal-home"],
+			["/journal/notes", "journal-notes"],
+			["/calendar", "calendar"],
+			["/land/plant/", "plant-detail"],
+			["/land/plants", "plant-list"],
+			["/land", "land-map"],
+			["/operations/log", "operations-log"],
+			["/operations", "operations-map"],
+			["/harvest/archive", "harvest-archive"],
+			["/harvest", "harvest-map"],
+			["/accounting", "accounting"],
+			["/meteo", "meteo"],
+			["/gallery", "gallery"]
+		];
+		return routes.find(([prefix]) => url.startsWith(prefix))?.[1] ?? "general";
 	});
 
 	displaySuggestions = computed<string[]>(() => {
@@ -393,36 +458,26 @@ export class ArnaldoChatComponent {
 
 	formatMarkdown(text: string): SafeHtml {
 		if (!text) return "";
-		let html = text
-			.replace(/&/g, "&amp;")
-			.replace(/</g, "&lt;")
-			.replace(/>/g, "&gt;");
+		return this.sanitizer.bypassSecurityTrustHtml(markdownToHtml(text));
+	}
 
-		html = html.replace(/\*\*(.*?)\*\*/g, "<strong class=\"font-semibold text-camp-earth\">$1</strong>");
-		html = html.replace(/\*(.*?)\*/g, "<em>$1</em>");
-		html = html.replace(/`(.*?)`/g, "<code class=\"bg-camp-sand/40 text-camp-earth px-1.5 py-0.5 rounded text-[11px] font-mono\">$1</code>");
-		html = html.replace(/\n/g, "<br>");
+	downloadReport(msg: ArnaldoChatMessage) {
+		if (!msg.report) return;
+		this.reportExport.download({ title: msg.report.title, subtitle: "Report di nonno Arnaldo", sections: [{ markdown: msg.report.markdown }] });
+	}
 
-		return this.sanitizer.bypassSecurityTrustHtml(html);
+	printReport(msg: ArnaldoChatMessage) {
+		if (!msg.report) return;
+		this.reportExport.print({ title: msg.report.title, subtitle: "Report di nonno Arnaldo", sections: [{ markdown: msg.report.markdown }] });
+	}
+
+	async requestReport() {
+		await this.arnaldoService.sendUserQuery(REPORT_PROMPTS[this.routeContext()] || REPORT_PROMPTS.general!, this.routeContext());
+		this.scrollToBottom();
 	}
 
 	private getSuggestedQuestionsForContext(ctx: ArnaldoPageContext): string[] {
-		switch (ctx) {
-			case "dashboard":
-				return ["Nonno, cosa c'è da fare oggi nell'uliveto?", "Come vedi la situazione delle piante?"];
-			case "meteo":
-				return ["Con questo meteo possiamo lavorare la terra?", "Servono irrigazioni nei prossimi giorni?"];
-			case "calendar":
-				return ["Quali sono i prossimi interventi sul campo?", "Ci sono attività che non dobbiamo scordare?"];
-			case "archive":
-				return ["Mostrami gli ultimi lavori che abbiamo fatto", "Quali interventi abbiamo completato?"];
-			case "land":
-				return ["Come vedi la terra in questo momento?", "C'è qualche pianta che ha bisogno di cure?"];
-			case "plant-detail":
-				return ["Come sta questa pianta secondo te?", "Che cure le faresti in questo periodo?"];
-			default:
-				return ["Nonno, che consigli hai per il nostro uliveto?", "Come possiamo prenderci cura del terreno?"];
-		}
+		return CONTEXT_QUESTIONS[ctx] || CONTEXT_QUESTIONS.general!;
 	}
 
 	toggleChat() {

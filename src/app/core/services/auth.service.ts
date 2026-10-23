@@ -154,7 +154,7 @@ export class AuthService {
 		if (!this.isAuthenticated()) {
 			return "/login";
 		}
-		return this.onboardingCompleted() ? "/dashboard" : "/onboarding";
+		return this.onboardingCompleted() ? "/journal/home" : "/onboarding";
 	}
 
 	navigatePostAuth(): Promise<boolean> {

@@ -1,13 +1,14 @@
 import { Component, inject, signal, computed, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { EventType } from '../../core/constants/domain';
 import { CalendarService, CalendarEvent } from '../../core/services/calendar.service';
 import { LandService, Farm } from '../../core/services/land.service';
-import { AppLayoutComponent } from '../../shared/components/app-layout/app-layout.component';
 import { CampCardComponent } from '../../shared/components/camp-card/camp-card.component';
 import { CampDialogComponent } from '../../shared/components/camp-dialog/camp-dialog.component';
 import { CampDatePickerComponent } from '../../shared/components/camp-date-picker/camp-date-picker.component';
 import { CampTimePickerComponent } from '../../shared/components/camp-time-picker/camp-time-picker.component';
+import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
 
 interface DayCell {
   date: Date;
@@ -22,81 +23,67 @@ interface DayCell {
   imports: [
     CommonModule,
     RouterLink,
-    AppLayoutComponent,
     CampCardComponent,
     CampDialogComponent,
     CampDatePickerComponent,
-    CampTimePickerComponent
+    CampTimePickerComponent,
+    PageHeaderComponent
   ],
   template: `
-    <app-layout>
-      <div class="max-w-7xl mx-auto space-y-8 animate-fade-in relative pb-10">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <nav class="flex items-center gap-2 text-xs text-camp-olive mb-1 uppercase tracking-widest font-bold">
-              <a routerLink="/dashboard" class="hover:text-camp-sage transition-colors">Dashboard</a>
-              <span>/</span>
-              <span class="text-camp-sage">Calendario</span>
-            </nav>
-            <h1 class="text-4xl font-serif text-camp-earth tracking-tight">Calendario Attività</h1>
-          </div>
+      <div class="max-w-7xl mx-auto space-y-6 animate-fade-in relative pb-10">
+        <app-page-header
+          section="Calendario"
+          title="Calendario attività"
+          description="Pianifica e segui trattamenti, manutenzioni, irrigazioni e raccolte del terreno attivo."
+        >
+          <ng-container actions>
+            <a routerLink="/operations/log" class="btn btn-secondary">Registro interventi</a>
 
-          <div class="flex flex-wrap items-center gap-4">
-            <a 
-              routerLink="/archive"
-              class="px-5 py-3 bg-white border border-camp-sand/40 rounded-camp text-camp-earth hover:text-camp-sage transition-all text-sm font-bold uppercase tracking-wider shadow-camp-sm flex items-center gap-2"
-            >
-              <span>📂</span> Archivio attività
-            </a>
-
-            <div class="flex items-center gap-4 px-5 py-3 bg-white rounded-camp shadow-camp-sm border border-camp-sand/40 relative">
-            <div class="w-10 h-10 rounded-camp bg-camp-sage/10 flex items-center justify-center text-camp-sage shadow-inner">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-            </div>
-            <button 
-              type="button"
-              (click)="$event.stopPropagation(); toggleDropdown('farmActive')"
-              class="text-left bg-transparent border-none p-0 focus:ring-0 focus:outline-none cursor-pointer flex flex-col"
-            >
-              <p class="text-[10px] uppercase tracking-wider text-camp-olive font-bold opacity-60 leading-none mb-1">Terreno Attivo</p>
-              <div class="flex items-center gap-1.5 font-serif text-camp-earth text-base">
+            <div class="relative">
+              <button
+                type="button"
+                (click)="$event.stopPropagation(); toggleDropdown('farmActive')"
+                class="btn btn-secondary"
+                aria-haspopup="listbox"
+                [attr.aria-expanded]="openDropdown() === 'farmActive'"
+              >
+                <span class="font-normal text-camp-olive">Terreno:</span>
                 <span>{{ getActiveFarmName() }}</span>
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-camp-olive/60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-camp-olive" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                 </svg>
-              </div>
-            </button>
+              </button>
 
-            @if (openDropdown() === 'farmActive') {
-              <div class="absolute z-50 top-full left-0 right-0 mt-1.5 bg-white border border-camp-sand rounded-xl shadow-camp-lg py-1.5 max-h-60 overflow-y-auto custom-scrollbar animate-slide-up min-w-[200px]">
-                @for (farm of farms(); track farm.id) {
-                  <button
-                    type="button"
-                    (click)="selectActiveFarm(farm.id)"
-                    class="w-full text-left px-4 py-2.5 text-xs text-camp-earth hover:bg-camp-cream/40 transition-colors flex items-center justify-between"
-                  >
-                    <span>{{ farm.name }}</span>
-                    @if (selectedFarmId() === farm.id) { <span class="text-camp-sage">✓</span> }
-                  </button>
-                }
-                @if (farms().length === 0) {
-                  <p class="px-4 py-2 text-xs text-camp-olive/60 font-medium">Nessun terreno</p>
-                }
-              </div>
-            }
-          </div>
-        </div>
-      </div>
+              @if (openDropdown() === 'farmActive') {
+                <div class="absolute z-50 top-full left-0 sm:left-auto sm:right-0 mt-1.5 bg-white border border-camp-sand rounded-xl shadow-camp-lg p-1 max-h-60 overflow-y-auto custom-scrollbar animate-slide-up min-w-[220px]">
+                  @for (farm of farms(); track farm.id) {
+                    <button
+                      type="button"
+                      (click)="selectActiveFarm(farm.id)"
+                      class="btn btn-ghost btn-sm w-full justify-between"
+                    >
+                      <span>{{ farm.name }}</span>
+                      @if (selectedFarmId() === farm.id) { <span class="text-camp-sage">✓</span> }
+                    </button>
+                  }
+                  @if (farms().length === 0) {
+                    <p class="px-3 py-2 text-muted">Nessun terreno</p>
+                  }
+                </div>
+              }
+            </div>
+
+            <button type="button" (click)="openCreateModal()" class="btn btn-primary">Nuova attività</button>
+          </ng-container>
+        </app-page-header>
 
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-3.5 sm:p-4 rounded-2xl border border-camp-sand/40 shadow-sm">
           <div class="flex items-center justify-between sm:justify-start gap-2 w-full md:w-auto">
             <div class="flex items-center gap-1.5">
-              <button 
+              <button
                 type="button"
                 (click)="navigateDate(-1)"
-                class="w-9 h-9 sm:w-10 sm:h-10 rounded-full hover:bg-camp-sand/30 active:scale-95 flex items-center justify-center text-camp-olive transition-all cursor-pointer"
+                class="btn btn-ghost btn-icon"
                 aria-label="Periodo precedente"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -106,14 +93,14 @@ interface DayCell {
               <button 
                 type="button"
                 (click)="setToday()"
-                class="px-3 sm:px-4 py-1.5 text-xs font-bold uppercase tracking-wider border border-camp-sand text-camp-olive rounded-full hover:bg-camp-sand/20 active:scale-95 transition-all cursor-pointer"
+                class="btn btn-secondary btn-sm"
               >
                 Oggi
               </button>
-              <button 
+              <button
                 type="button"
                 (click)="navigateDate(1)"
-                class="w-9 h-9 sm:w-10 sm:h-10 rounded-full hover:bg-camp-sand/30 active:scale-95 flex items-center justify-center text-camp-olive transition-all cursor-pointer"
+                class="btn btn-ghost btn-icon"
                 aria-label="Periodo successivo"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -122,72 +109,50 @@ interface DayCell {
               </button>
             </div>
 
-            <h2 class="text-base sm:text-xl font-serif text-camp-earth tracking-tight font-medium text-center truncate px-2">
+            <h2 class="section-title text-base sm:text-xl text-center truncate px-2">
               {{ viewTitle() }}
             </h2>
-
-            <button
-              type="button"
-              (click)="openCreateModal()"
-              class="md:hidden w-9 h-9 rounded-full bg-camp-sage hover:bg-camp-earth text-white flex items-center justify-center shadow-md active:scale-95 transition-all cursor-pointer shrink-0"
-              aria-label="Nuova attività"
-              title="Aggiungi attività"
-            >
-              <span class="text-lg font-bold leading-none">+</span>
-            </button>
           </div>
 
           <div class="flex items-center gap-2 sm:gap-3 justify-between md:justify-end w-full md:w-auto">
-            <div class="bg-camp-sand/20 p-1 rounded-full flex gap-1 border border-camp-sand/30 overflow-x-auto max-w-full">
-              <button 
+            <div class="segmented overflow-x-auto max-w-full" role="group" aria-label="Vista calendario">
+              <button
                 type="button"
                 (click)="setView('month')"
-                [class.bg-white]="currentView() === 'month'"
-                [class.text-camp-earth]="currentView() === 'month'"
-                [class.shadow-sm]="currentView() === 'month'"
-                class="px-3 sm:px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider text-camp-olive transition-all cursor-pointer"
+                [class.is-active]="currentView() === 'month'"
+                [attr.aria-pressed]="currentView() === 'month'"
+                class="segmented-item"
               >
                 Mese
               </button>
-              <button 
+              <button
                 type="button"
                 (click)="setView('agenda')"
-                [class.bg-white]="currentView() === 'agenda'"
-                [class.text-camp-earth]="currentView() === 'agenda'"
-                [class.shadow-sm]="currentView() === 'agenda'"
-                class="px-3 sm:px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider text-camp-olive transition-all cursor-pointer"
+                [class.is-active]="currentView() === 'agenda'"
+                [attr.aria-pressed]="currentView() === 'agenda'"
+                class="segmented-item"
               >
                 Agenda
               </button>
-              <button 
+              <button
                 type="button"
                 (click)="setView('week')"
-                [class.bg-white]="currentView() === 'week'"
-                [class.text-camp-earth]="currentView() === 'week'"
-                [class.shadow-sm]="currentView() === 'week'"
-                class="px-3 sm:px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider text-camp-olive transition-all cursor-pointer hidden sm:block"
+                [class.is-active]="currentView() === 'week'"
+                [attr.aria-pressed]="currentView() === 'week'"
+                class="segmented-item hidden sm:flex"
               >
                 Settimana
               </button>
-              <button 
+              <button
                 type="button"
                 (click)="setView('day')"
-                [class.bg-white]="currentView() === 'day'"
-                [class.text-camp-earth]="currentView() === 'day'"
-                [class.shadow-sm]="currentView() === 'day'"
-                class="px-3 sm:px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider text-camp-olive transition-all cursor-pointer hidden sm:block"
+                [class.is-active]="currentView() === 'day'"
+                [attr.aria-pressed]="currentView() === 'day'"
+                class="segmented-item hidden sm:flex"
               >
                 Giorno
               </button>
             </div>
-
-            <button
-              type="button"
-              (click)="openCreateModal()"
-              class="hidden md:flex px-5 py-2.5 bg-camp-sage hover:bg-camp-earth text-white text-xs font-bold uppercase tracking-wider rounded-full hover:scale-[1.02] active:scale-[0.98] transition-all shadow-md items-center gap-2 cursor-pointer"
-            >
-              <span>+</span> Attività
-            </button>
           </div>
         </div>
 
@@ -210,7 +175,7 @@ interface DayCell {
                 <div class="text-center py-12 text-camp-olive">
                   <span class="text-4xl block mb-2">📅</span>
                   <p class="font-serif text-base text-camp-earth">Nessuna attività in questo mese</p>
-                  <p class="text-xs text-camp-olive/80 mt-1">Puoi pianificare un nuovo intervento con il pulsante "+ Attività".</p>
+                  <p class="text-xs text-camp-olive/80 mt-1">Puoi pianificare un nuovo intervento con il pulsante "Nuova attività".</p>
                 </div>
               } @else {
                 <div class="space-y-3">
@@ -229,9 +194,9 @@ interface DayCell {
                             <h4 class="font-serif font-bold text-sm text-camp-earth truncate">{{ event.title }}</h4>
                             @if (isPastEvent(event)) {
                               @switch (getEventCompletionStatus(event)) {
-                                @case ('completata') { <span class="text-[9px] px-2 py-0.5 rounded-full bg-green-100 text-green-800 font-bold">Completata</span> }
-                                @case ('completata_note') { <span class="text-[9px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-bold">Con Note</span> }
-                                @case ('non_completata') { <span class="text-[9px] px-2 py-0.5 rounded-full bg-red-100 text-red-800 font-bold">Non svolta</span> }
+                                @case ('completata') { <span class="text-[9px] px-2 py-0.5 rounded-full bg-camp-success-light text-camp-success font-bold">Completata</span> }
+                                @case ('completata_note') { <span class="text-[9px] px-2 py-0.5 rounded-full bg-camp-amber/10 text-camp-amber-dark font-bold">Con Note</span> }
+                                @case ('non_completata') { <span class="text-[9px] px-2 py-0.5 rounded-full bg-camp-error-light text-camp-error font-bold">Non svolta</span> }
                               }
                             }
                           </div>
@@ -306,9 +271,9 @@ interface DayCell {
                           <div class="flex items-center gap-1 min-w-0 flex-1">
                             @if (isPastEvent(event)) {
                               @switch (getEventCompletionStatus(event)) {
-                                @case ('completata') { <span class="text-green-600 shrink-0">✓</span> }
-                                @case ('completata_note') { <span class="text-amber-600 shrink-0">📝</span> }
-                                @case ('non_completata') { <span class="text-red-600 shrink-0">✗</span> }
+                                @case ('completata') { <span class="text-camp-success shrink-0">✓</span> }
+                                @case ('completata_note') { <span class="text-camp-amber-dark shrink-0">📝</span> }
+                                @case ('non_completata') { <span class="text-camp-error shrink-0">✗</span> }
                               }
                             }
                             <span class="truncate pr-1">{{ event.title }}</span>
@@ -360,12 +325,14 @@ interface DayCell {
                       @for (ev of cell.events.slice(0, 3); track ev.id) {
                         <span
                           [class]="
-                            ev.type === 'maintenance'
+                            ev.type === 'treatment'
+                              ? 'bg-camp-info'
+                              : ev.type === 'maintenance'
                               ? 'bg-camp-terracotta'
                               : ev.type === 'harvest'
-                                ? 'bg-amber-500'
+                                ? 'bg-camp-amber'
                                 : ev.type === 'irrigation'
-                                  ? 'bg-blue-500'
+                                  ? 'bg-camp-info'
                                   : 'bg-camp-sage'
                           "
                           class="w-1.5 h-1.5 rounded-full shrink-0"
@@ -388,9 +355,9 @@ interface DayCell {
                   <button
                     type="button"
                     (click)="openCreateModalAtDate(selectedMobileDate())"
-                    class="px-3.5 py-1.5 bg-camp-cream hover:bg-camp-sand/50 text-camp-earth text-[11px] font-bold uppercase tracking-wider rounded-full border border-camp-sand/60 transition-all flex items-center gap-1 cursor-pointer active:scale-95 shadow-2xs"
+                    class="btn btn-secondary btn-sm"
                   >
-                    <span>+</span> Aggiungi
+                    Aggiungi
                   </button>
                 </div>
 
@@ -418,9 +385,9 @@ interface DayCell {
                               <h5 class="font-serif font-bold text-sm text-camp-earth truncate">{{ event.title }}</h5>
                               @if (isPastEvent(event)) {
                                 @switch (getEventCompletionStatus(event)) {
-                                  @case ('completata') { <span class="text-[9px] px-2 py-0.5 rounded-full bg-green-100 text-green-800 font-bold">Completata</span> }
-                                  @case ('completata_note') { <span class="text-[9px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-bold">Con Note</span> }
-                                  @case ('non_completata') { <span class="text-[9px] px-2 py-0.5 rounded-full bg-red-100 text-red-800 font-bold">Non svolta</span> }
+                                  @case ('completata') { <span class="text-[9px] px-2 py-0.5 rounded-full bg-camp-success-light text-camp-success font-bold">Completata</span> }
+                                  @case ('completata_note') { <span class="text-[9px] px-2 py-0.5 rounded-full bg-camp-amber/10 text-camp-amber-dark font-bold">Con Note</span> }
+                                  @case ('non_completata') { <span class="text-[9px] px-2 py-0.5 rounded-full bg-camp-error-light text-camp-error font-bold">Non svolta</span> }
                                 }
                               }
                             </div>
@@ -476,9 +443,9 @@ interface DayCell {
                             <div class="flex items-center gap-1.5 min-w-0 flex-1">
                               @if (isPastEvent(event)) {
                                 @switch (getEventCompletionStatus(event)) {
-                                  @case ('completata') { <span class="text-green-600 shrink-0">✓</span> }
-                                  @case ('completata_note') { <span class="text-amber-600 shrink-0">📝</span> }
-                                  @case ('non_completata') { <span class="text-red-600 shrink-0">✗</span> }
+                                  @case ('completata') { <span class="text-camp-success shrink-0">✓</span> }
+                                  @case ('completata_note') { <span class="text-camp-amber-dark shrink-0">📝</span> }
+                                  @case ('non_completata') { <span class="text-camp-error shrink-0">✗</span> }
                                 }
                               }
                               <span class="font-serif font-bold text-camp-earth truncate">{{ event.title }}</span>
@@ -656,7 +623,7 @@ interface DayCell {
                       <div class="min-w-0">
                         <div class="flex items-center gap-2 mb-1 flex-wrap">
                           <h4 class="text-sm font-serif font-bold text-camp-earth truncate">{{ suggestion.title }}</h4>
-                          <span class="px-2 py-0.5 bg-amber-50 text-amber-700 text-[9px] font-bold uppercase tracking-widest rounded-full border border-amber-200 shrink-0">
+                          <span class="px-2 py-0.5 bg-camp-amber/10 text-camp-amber-dark text-[9px] font-bold uppercase tracking-widest rounded-full border border-camp-amber/30 shrink-0">
                             Arnaldo
                           </span>
                         </div>
@@ -682,30 +649,34 @@ interface DayCell {
                     </div>
                     <div class="flex items-center gap-2 shrink-0 pl-12 md:pl-0">
                       <button
+                        type="button"
                         (click)="onAcceptSuggestion(suggestion)"
                         [disabled]="isActionLoading()"
-                        class="flex items-center gap-1.5 px-4 py-2 bg-camp-sage text-white text-[10px] font-bold uppercase tracking-wider rounded-full hover:bg-camp-olive hover:scale-[1.03] active:scale-[0.97] transition-all shadow-sm disabled:opacity-50"
+                        class="btn btn-primary btn-sm"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
                         </svg>
                         Accetta
                       </button>
                       <button
+                        type="button"
                         (click)="onDismissSuggestion(suggestion)"
                         [disabled]="isActionLoading()"
-                        class="flex items-center gap-1.5 px-4 py-2 bg-white text-camp-olive text-[10px] font-bold uppercase tracking-wider rounded-full border border-camp-sand hover:bg-camp-sand/30 hover:scale-[1.03] active:scale-[0.97] transition-all disabled:opacity-50"
+                        class="btn btn-secondary btn-sm"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
                         </svg>
                         Ignora
                       </button>
                       <button
+                        type="button"
                         (click)="onEditSuggestion(suggestion)"
                         [disabled]="isActionLoading()"
-                        class="w-8 h-8 flex items-center justify-center rounded-full border border-camp-sand text-camp-olive hover:bg-camp-sand/30 hover:scale-110 transition-all disabled:opacity-50"
+                        class="btn btn-ghost btn-icon btn-sm"
                         title="Modifica prima di accettare"
+                        aria-label="Modifica prima di accettare"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -719,11 +690,10 @@ interface DayCell {
           }
         </div>
       </div>
-    </app-layout>
 
     @if (showFormModal()) {
       <app-camp-dialog
-        [title]="editingEvent() ? 'Modifica Attività' : 'Nuova Attività'"
+        [title]="editingEvent() ? 'Modifica attività' : 'Nuova attività'"
         [subtitle]="modalSubtitle()"
         [icon]="editingEvent() ? '✍️' : '📅'"
         (close)="closeFormModal()"
@@ -751,41 +721,41 @@ interface DayCell {
                   <button
                     type="button"
                     (click)="formPastStatus.set('completata')"
-                    [class.bg-green-50]="formPastStatus() === 'completata'"
-                    [class.text-green-700]="formPastStatus() === 'completata'"
-                    [class.border-green-300]="formPastStatus() === 'completata'"
+                    [class.bg-camp-success-light]="formPastStatus() === 'completata'"
+                    [class.text-camp-success]="formPastStatus() === 'completata'"
+                    [class.border-camp-success]="formPastStatus() === 'completata'"
                     [class.bg-white]="formPastStatus() !== 'completata'"
                     [class.text-camp-olive]="formPastStatus() !== 'completata'"
                     [class.border-camp-sand]="formPastStatus() !== 'completata'"
-                    class="py-3 px-4 border rounded-xl text-xs font-bold uppercase tracking-wider text-center transition-all hover:scale-[1.02] shadow-sm flex items-center justify-center gap-1 cursor-pointer"
+                    class="btn border gap-1 px-3"
                   >
                     <span>✓</span> Completata
                   </button>
                   <button
                     type="button"
                     (click)="formPastStatus.set('completata_note')"
-                    [class.bg-amber-50]="formPastStatus() === 'completata_note'"
-                    [class.text-amber-700]="formPastStatus() === 'completata_note'"
-                    [class.border-amber-300]="formPastStatus() === 'completata_note'"
+                    [class.bg-camp-cream]="formPastStatus() === 'completata_note'"
+                    [class.text-camp-bark]="formPastStatus() === 'completata_note'"
+                    [class.border-camp-amber]="formPastStatus() === 'completata_note'"
                     [class.bg-white]="formPastStatus() !== 'completata_note'"
                     [class.text-camp-olive]="formPastStatus() !== 'completata_note'"
                     [class.border-camp-sand]="formPastStatus() !== 'completata_note'"
-                    class="py-3 px-4 border rounded-xl text-xs font-bold uppercase tracking-wider text-center transition-all hover:scale-[1.02] shadow-sm flex items-center justify-center gap-1 cursor-pointer"
+                    class="btn border gap-1 px-3"
                   >
-                    <span>📝</span> Con Note
+                    <span>📝</span> Con note
                   </button>
                   <button
                     type="button"
                     (click)="formPastStatus.set('non_completata')"
-                    [class.bg-red-50]="formPastStatus() === 'non_completata'"
-                    [class.text-red-700]="formPastStatus() === 'non_completata'"
-                    [class.border-red-300]="formPastStatus() === 'non_completata'"
+                    [class.bg-camp-error-light]="formPastStatus() === 'non_completata'"
+                    [class.text-camp-error]="formPastStatus() === 'non_completata'"
+                    [class.border-camp-error]="formPastStatus() === 'non_completata'"
                     [class.bg-white]="formPastStatus() !== 'non_completata'"
                     [class.text-camp-olive]="formPastStatus() !== 'non_completata'"
                     [class.border-camp-sand]="formPastStatus() !== 'non_completata'"
-                    class="py-3 px-4 border rounded-xl text-xs font-bold uppercase tracking-wider text-center transition-all hover:scale-[1.02] shadow-sm flex items-center justify-center gap-1 cursor-pointer"
+                    class="btn border gap-1 px-3"
                   >
-                    <span>✗</span> Non Svolta
+                    <span>✗</span> Non svolta
                   </button>
                 </div>
               </div>
@@ -866,6 +836,14 @@ interface DayCell {
 
                     @if (openDropdown() === 'type') {
                       <div class="absolute z-50 left-0 right-0 mt-1.5 bg-white border border-camp-sand rounded-xl shadow-camp-lg py-1.5 animate-slide-up">
+                        <button
+                          type="button"
+                          (click)="selectType('treatment')"
+                          class="w-full text-left px-4 py-2.5 text-xs text-camp-earth hover:bg-camp-cream/40 transition-colors flex items-center justify-between cursor-pointer"
+                        >
+                          <span>🧪 Trattamento</span>
+                          @if (formType() === 'treatment') { <span class="text-camp-sage">✓</span> }
+                        </button>
                         <button
                           type="button"
                           (click)="selectType('maintenance')"
@@ -1024,30 +1002,32 @@ interface DayCell {
           }
         </div>
 
-        <div footer class="px-8 py-5 border-t border-camp-sand/30 flex items-center justify-between bg-camp-cream/10 gap-4">
+        <div footer class="dialog-footer justify-between items-center">
           <div>
             @if (editingEvent()) {
               <button
                 type="button"
                 (click)="openDeleteConfirm()"
-                class="px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-red-500 hover:bg-red-50 rounded-full transition-all border border-red-200 cursor-pointer"
+                class="btn btn-danger-soft"
               >
-                Elimina Attività
+                Elimina attività
               </button>
             }
           </div>
 
           <div class="flex items-center gap-3">
             <button
+              type="button"
               (click)="closeFormModal()"
-              class="px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-camp-olive hover:bg-camp-sand/30 rounded-full transition-all border border-camp-sand cursor-pointer"
+              class="btn btn-secondary"
             >
               Annulla
             </button>
             <button
+              type="button"
               [disabled]="!isFormValid()"
               (click)="onSaveEvent()"
-              class="px-6 py-2.5 bg-camp-sage hover:bg-camp-olive text-white text-xs font-bold uppercase tracking-wider rounded-full hover:scale-[1.02] active:scale-[0.98] transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-camp-sage disabled:scale-100 cursor-pointer"
+              class="btn btn-primary"
             >
               Salva
             </button>
@@ -1058,8 +1038,8 @@ interface DayCell {
 
     @if (showDeleteConfirm()) {
       <app-camp-dialog
-        title="Conferma Eliminazione"
-        subtitle="Operazione Irreversibile"
+        title="Conferma eliminazione"
+        subtitle="Operazione irreversibile"
         icon="⚠️"
         maxWidth="max-w-lg"
         (close)="showDeleteConfirm.set(false)"
@@ -1073,11 +1053,11 @@ interface DayCell {
           </p>
         </div>
 
-        <div footer class="px-8 py-5 bg-camp-cream/30 border-t border-camp-sand/30 flex justify-end gap-3">
+        <div footer class="dialog-footer">
           <button
             type="button"
             (click)="showDeleteConfirm.set(false)"
-            class="px-5 py-2.5 border border-camp-sand/60 rounded-camp text-xs font-bold uppercase tracking-wider text-camp-olive hover:bg-camp-cream/40 transition-colors cursor-pointer"
+            class="btn btn-secondary"
           >
             Annulla
           </button>
@@ -1085,9 +1065,9 @@ interface DayCell {
             type="button"
             (click)="confirmDeleteEvent()"
             [disabled]="isLoading()"
-            class="px-5 py-2.5 bg-red-600 hover:bg-red-500 text-white rounded-camp text-xs font-bold uppercase tracking-wider transition-colors disabled:opacity-50 cursor-pointer"
+            class="btn btn-danger"
           >
-            Elimina Attività
+            Elimina attività
           </button>
         </div>
       </app-camp-dialog>
@@ -1123,7 +1103,7 @@ export class CalendarComponent implements OnInit {
 
   formTitle = signal('');
   formDescription = signal('');
-  formType = signal<'maintenance' | 'harvest' | 'irrigation' | 'other'>('maintenance');
+  formType = signal<EventType>('maintenance');
   formFarmId = signal('');
   formAllDay = signal(false);
   formStartDate = signal('');
@@ -1162,6 +1142,13 @@ export class CalendarComponent implements OnInit {
   titlePresets = computed(() => {
     const type = this.formType();
     switch (type) {
+      case 'treatment':
+        return [
+          'Trattamento rameico',
+          'Trattamento contro la mosca',
+          'Concimazione fogliare',
+          'Trattamento contro occhio di pavone'
+        ];
       case 'maintenance':
         return [
           'Potatura ulivi',
@@ -1485,15 +1472,16 @@ export class CalendarComponent implements OnInit {
 
   getEventStatusClass(status: 'completata' | 'completata_note' | 'non_completata'): string {
     switch (status) {
-      case 'completata': return 'bg-green-50 text-green-700 border border-green-200';
-      case 'completata_note': return 'bg-amber-50 text-amber-700 border border-amber-200';
-      case 'non_completata': return 'bg-red-50 text-red-700 border border-red-200';
-      default: return 'bg-gray-50 text-gray-700 border border-gray-200';
+      case 'completata': return 'bg-camp-success-light text-camp-success border border-camp-success/20';
+      case 'completata_note': return 'bg-camp-amber/10 text-camp-amber-dark border border-camp-amber/30';
+      case 'non_completata': return 'bg-camp-error-light text-camp-error border border-camp-error/20';
+      default: return 'bg-camp-sand/30 text-camp-bark border border-camp-sand';
     }
   }
 
   getEventTagLabel(type: string): string {
     switch (type) {
+      case 'treatment': return 'Trattamento';
       case 'maintenance': return 'Manutenzione';
       case 'harvest': return 'Raccolta';
       case 'irrigation': return 'Irrigazione';
@@ -1544,6 +1532,7 @@ export class CalendarComponent implements OnInit {
 
   getEventIcon(type: string): string {
     switch (type) {
+      case 'treatment': return '🧪';
       case 'maintenance': return '🔧';
       case 'harvest': return '🚜';
       case 'irrigation': return '💧';
@@ -1553,12 +1542,14 @@ export class CalendarComponent implements OnInit {
 
   getEventColorClasses(type: string): string {
     switch (type) {
+      case 'treatment':
+        return 'bg-camp-info-light text-camp-info border-camp-info/20 hover:bg-camp-info-light';
       case 'maintenance':
         return 'bg-camp-sage/10 text-camp-olive border-camp-sage/30 hover:bg-camp-sage/20';
       case 'harvest':
         return 'bg-camp-accent/10 text-camp-earth border-camp-accent/30 hover:bg-camp-accent/20';
       case 'irrigation':
-        return 'bg-blue-50 text-blue-800 border-blue-200 hover:bg-blue-100';
+        return 'bg-camp-info-light text-camp-info border-camp-info/20 hover:bg-camp-info-light';
       default:
         return 'bg-camp-sand/20 text-camp-earth border-camp-sand/40 hover:bg-camp-sand/30';
     }
@@ -1959,7 +1950,7 @@ export class CalendarComponent implements OnInit {
     this.openDropdown.set(null);
   }
 
-  selectType(type: 'maintenance' | 'harvest' | 'irrigation' | 'other') {
+  selectType(type: EventType) {
     this.formType.set(type);
     this.openDropdown.set(null);
   }
@@ -2022,6 +2013,7 @@ export class CalendarComponent implements OnInit {
   getSelectedTypeLabel(): string {
     const type = this.formType();
     switch (type) {
+      case 'treatment': return 'Trattamento';
       case 'maintenance': return 'Manutenzione';
       case 'harvest': return 'Raccolta';
       case 'irrigation': return 'Irrigazione';

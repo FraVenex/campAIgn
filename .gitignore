@@ -44,3 +44,7 @@ Thumbs.db
 # Secrets and local config
 .env
 .env.local
+
+# Dump locali e file di lavoro (possono contenere sessioni e dati personali)
+/scratch
+.env
